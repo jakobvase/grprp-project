@@ -5,5 +5,5 @@
 !*.txt
 !*.c
 !*.cpp
-!.obj
+!*.obj
 
