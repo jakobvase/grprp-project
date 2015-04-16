@@ -4,6 +4,7 @@
 #include <fstream>
 #include <limits>
 #include <string>
+#include <cmath>
 #include <GLUT/glut.h>
 
 using namespace std;
@@ -28,13 +29,13 @@ vector<vertex> vertices;
 vector<triangle> triangles;
 vector<vertex> normals;
 
-/*void normalize(vertex& v)
+void normalize(vertex& v)
 {
   float length = sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
   v.x /= length;
   v.y /= length;
   v.z /= length;
-}*/
+}
 
 float dot(vertex v1, vertex v2)
 {
@@ -76,10 +77,15 @@ vertex scale(vertex v, double s) {
 }
 
 vertex bezier(vertex v1, vertex v2, vertex n1, vertex n2) {
-  vertex b, t1, t2;
-  t1 = cross(cross(n1, subtract(v2, v1)), n1); // Create the vector pointing toward the curve.
-  t2 = cross(cross(n2, subtract(v1, v2)), n2);
-  b = add(scale(v1, .125), add(scale(t1, .75), add(scale(t2, .75), scale(v2, .125))));
+  vertex b;/*, t1, t2, e1, e2;
+  /*e1 = subtract(v2, v1);
+  e2 = subtract(v1, v2);
+  t1 = scale(cross(cross(n1, e1), n1), -1); // Create the vector pointing toward the curve.
+  t2 = scale(cross(cross(n2, e2), n2), -1);
+  normalize(t1);
+  normalize(t2);*/
+  b = add(scale(v1, .125), add(scale(n1, .375), add(scale(n2, .375), scale(v2, .125))));
+  //b = scale(add(v1, v2), .5);
   return b;
 }
 
@@ -95,7 +101,7 @@ triangle createTriangle(int v1, int v2, int v3, int n1, int n2, int n3) {
 }
 
 void curve_object(int count) {
-  if(count == 0) return;
+  if(count <= 0) return;
   vertex v1, v2, v3, n1, n2, n3, b1, b2, b3, bn1, bn2, bn3;
   int i1, i2, i3, in1, in2, in3, o1, o2, o3, on1, on2, on3;
   triangle t1, t2, t3, t4;
@@ -120,9 +126,12 @@ void curve_object(int count) {
     b1 = bezier(v1, v2, n1, n2);
     b2 = bezier(v2, v3, n2, n3);
     b3 = bezier(v3, v1, n3, n1);
-    bn1 = scale(add(n1, n2), .5);
-    bn2 = scale(add(n2, n3), .5);
-    bn3 = scale(add(n3, n1), .5);
+    bn1 = scale(add(n1, n2), 1);
+    bn2 = scale(add(n2, n3), 1);
+    bn3 = scale(add(n3, n1), 1);
+    normalize(bn1);
+    normalize(bn2);
+    normalize(bn3);
 
     i1 = vertices.size();
     i2 = i1 + 1;
@@ -189,10 +198,11 @@ void read_obj_file(const char* filename)
         new_triangle.n3 --;
 
 	      triangles.push_back(new_triangle);
-        cout << new_triangle.n1 << new_triangle.n2 << new_triangle.n3 << "\n";
+        //cout << new_triangle.n1 << new_triangle.n2 << new_triangle.n3 << "\n";
       }
       else if (first_word == "vn") {
         ifs >> new_vertex.x >> new_vertex.y >> new_vertex.z;
+        normalize(new_vertex);
         normals.push_back(new_vertex);
       }
       // Get rid of anything left on this line (including the newline).
@@ -206,7 +216,7 @@ void read_obj_file(const char* filename)
 
 void draw_obj(void)
 {
-  vertex v1, v2, v3;
+  vertex v1, v2, v3, n1, n2, n3;
   vertex e1, e2;
   vertex n;
 
@@ -215,7 +225,11 @@ void draw_obj(void)
     v1 = vertices.at(triangles.at(i).i1);
     v2 = vertices.at(triangles.at(i).i2);
     v3 = vertices.at(triangles.at(i).i3);
+    n1 = normals.at(triangles.at(i).n1);
+    n2 = normals.at(triangles.at(i).n2);
+    n3 = normals.at(triangles.at(i).n3);
 
+    /**
     // e1 is edge from v1 to v2.
     e1.x = v2.x - v1.x;
     e1.y = v2.y - v1.y;
@@ -230,13 +244,27 @@ void draw_obj(void)
     n.x = (e1.y * e2.z) - (e1.z * e2.y);
     n.y = (e1.z * e2.x) - (e1.x * e2.z);
     n.z = (e1.x * e2.y) - (e1.y * e2.x);
+    /**/
+    /**/
+    n = scale(add(n1, add(n2, n3)), 0.333333);
+    /**/
 
     // Draw this triangle.
     glBegin(GL_TRIANGLES);
+    /**/
     glNormal3f(n.x, n.y, n.z);
     glVertex3f(v1.x, v1.y, v1.z);
     glVertex3f(v2.x, v2.y, v2.z);
     glVertex3f(v3.x, v3.y, v3.z);
+    /**/
+    /*
+    glNormal3f(n1.x, n1.y, n1.z);
+    glVertex3f(v1.x, v1.y, v1.z);
+    glNormal3f(n2.x, n2.y, n2.z);
+    glVertex3f(v2.x, v2.y, v2.z);
+    glNormal3f(n3.x, n3.y, n3.z);
+    glVertex3f(v3.x, v3.y, v3.z);
+    /**/
     glEnd();
   }
 }
@@ -276,7 +304,7 @@ void init_scene(void)
 int main(int argc, char **argv)
 {
   // Check for proper arguments.
-  if (argc < 2) {
+  if (argc < 3) {
     cout << "usage: " << argv[0] << " <obj_filename>" << endl;
     exit(0);
   }
@@ -285,7 +313,7 @@ int main(int argc, char **argv)
   read_obj_file(argv[1]);
 
   // Curve it!
-  curve_object(1);
+  curve_object(stoi(argv[2]));
   
   // Set up glut.
   glutInit(&argc, argv);
