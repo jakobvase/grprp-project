@@ -4,6 +4,7 @@
 #include <fstream>
 #include <limits>
 #include <string>
+#include <cmath>
 #include <GL/glut.h>
 
 using namespace std;
@@ -108,6 +109,50 @@ void display(void)
   glutSwapBuffers();
 }
 
+void make_identity_matrix(GLfloat* matrix)
+{
+  for (int i = 0; i < 16; ++i) {
+    matrix[i] = 0;
+  }
+
+  matrix[0] = 1;
+  matrix[5] = 1;
+  matrix[10] = 1;
+  matrix[15] = 1;
+}
+
+void make_translate_matrix(GLfloat* matrix, float tx, float ty, float tz)
+{
+  make_identity_matrix(matrix);
+
+  matrix[12] = tx;
+  matrix[13] = ty;
+  matrix[14] = tz;
+}
+
+void make_y_rotate_matrix(GLfloat* matrix, float ry_degrees)
+{
+  float ry_radians = (M_PI / 180.0) * ry_degrees;
+  float cos_ry = cos(ry_radians);
+  float sin_ry = sin(ry_radians);
+
+  make_identity_matrix(matrix);
+
+  matrix[0] = cos_ry;
+  matrix[2] = -sin_ry;
+  matrix[8] = sin_ry;
+  matrix[10] = cos_ry;
+}
+
+void make_scale_matrix(GLfloat* matrix, float sx, float sy, float sz)
+{
+  make_identity_matrix(matrix);
+
+  matrix[0] = sx;
+  matrix[5] = sy;
+  matrix[10] = sz;
+}
+
 void init_scene(void)
 {
   // Configure a light.
@@ -125,12 +170,26 @@ void init_scene(void)
   glMatrixMode(GL_PROJECTION);
   gluPerspective(40.0, 1.0, 1.0, 10.0);
   glMatrixMode(GL_MODELVIEW);
-  gluLookAt(0.0, 2.0, 5.0,  // Set eye position, target position, and up direction.
-    0.0, 0.0, 0.0,
+  
+  gluLookAt(0.0, 0.0, 0.0,  // Set eye position, target position, and up direction.
+    0.0, -2.0, -5.0,
     0.0, 1.0, 0.);
 
-  // Rotate object.
-  glRotatef(30, 0.0, 1.0, 0.0);
+  // Pose object using your own matrices.
+  GLfloat matrix[16];
+  make_translate_matrix(matrix, 0.0, -2.0, -5.0);
+  glMultMatrixf(matrix);
+  make_y_rotate_matrix(matrix, 30.0);
+  glMultMatrixf(matrix);
+  make_scale_matrix(matrix, 0.5, 1.25, 1.0);
+  glMultMatrixf(matrix);
+
+  /*
+  // Pose object using OpenGL calls.
+  glTranslatef(0.0, -2.0, -5.0);
+  glRotatef(30.0, 0.0, 1.0, 0.0);
+  glScalef(0.5, 1.25, 1.0);
+  */
 }
 
 int main(int argc, char **argv)
