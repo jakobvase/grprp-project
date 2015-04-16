@@ -2,6 +2,7 @@
 
 !*/
 !.gitignore
+!*makefile
 !*.txt
 !*.c
 !*.cpp
