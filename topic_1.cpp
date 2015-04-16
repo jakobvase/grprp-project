@@ -4,7 +4,7 @@
 #include <fstream>
 #include <limits>
 #include <string>
-#include <GL/glut.h>
+#include <GLUT/glut.h>
 
 using namespace std;
 
@@ -27,6 +27,131 @@ struct triangle {
 vector<vertex> vertices;
 vector<triangle> triangles;
 vector<vertex> normals;
+
+/*void normalize(vertex& v)
+{
+  float length = sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+  v.x /= length;
+  v.y /= length;
+  v.z /= length;
+}*/
+
+float dot(vertex v1, vertex v2)
+{
+  double result = v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+
+  return result;
+}
+
+vertex cross(vertex v1, vertex v2) {
+  vertex cr;
+  cr.x = v1.y * v2.z - v1.z * v2.y;
+  cr.y = v1.z * v2.x - v1.x * v2.z;
+  cr.z = v1.x * v2.y - v1.y * v2.x;
+  return cr;
+}
+
+vertex subtract(vertex v1, vertex v2) {
+  vertex sub;
+  sub.x = v1.x - v2.x;
+  sub.y = v1.y - v2.y;
+  sub.z = v1.z - v2.z;
+  return sub;
+}
+
+vertex add(vertex v1, vertex v2) {
+  vertex sub;
+  sub.x = v1.x + v2.x;
+  sub.y = v1.y + v2.y;
+  sub.z = v1.z + v2.z;
+  return sub;
+}
+
+vertex scale(vertex v, double s) {
+  vertex sub;
+  sub.x = v.x * s;
+  sub.y = v.y * s;
+  sub.z = v.z * s;
+  return sub;
+}
+
+vertex bezier(vertex v1, vertex v2, vertex n1, vertex n2) {
+  vertex b, t1, t2;
+  t1 = cross(cross(n1, subtract(v2, v1)), n1); // Create the vector pointing toward the curve.
+  t2 = cross(cross(n2, subtract(v1, v2)), n2);
+  b = add(scale(v1, .125), add(scale(t1, .75), add(scale(t2, .75), scale(v2, .125))));
+  return b;
+}
+
+triangle createTriangle(int v1, int v2, int v3, int n1, int n2, int n3) {
+  triangle t;
+  t.i1 = v1;
+  t.i2 = v2;
+  t.i3 = v3;
+  t.n1 = n1;
+  t.n2 = n2;
+  t.n3 = n3;
+  return t;
+}
+
+void curve_object(int count) {
+  if(count == 0) return;
+  vertex v1, v2, v3, n1, n2, n3, b1, b2, b3, bn1, bn2, bn3;
+  int i1, i2, i3, in1, in2, in3, o1, o2, o3, on1, on2, on3;
+  triangle t1, t2, t3, t4;
+  vector<triangle> new_triangles;
+
+  for (int i = 0; i < triangles.size(); ++i) {
+    // Read vertices out of triangles vector.
+    o1 = triangles.at(i).i1;
+    o2 = triangles.at(i).i2;
+    o3 = triangles.at(i).i3;
+    on1 = triangles.at(i).n1;
+    on2 = triangles.at(i).n2;
+    on3 = triangles.at(i).n3;
+
+    v1 = vertices.at(o1);
+    v2 = vertices.at(o2);
+    v3 = vertices.at(o3);
+    n1 = normals.at(on1);
+    n2 = normals.at(on2);
+    n3 = normals.at(on3);
+
+    b1 = bezier(v1, v2, n1, n2);
+    b2 = bezier(v2, v3, n2, n3);
+    b3 = bezier(v3, v1, n3, n1);
+    bn1 = scale(add(n1, n2), .5);
+    bn2 = scale(add(n2, n3), .5);
+    bn3 = scale(add(n3, n1), .5);
+
+    i1 = vertices.size();
+    i2 = i1 + 1;
+    i3 = i2 + 1;
+    in1 = normals.size();
+    in2 = in1 + 1;
+    in3 = in2 + 1;
+
+    vertices.push_back(b1);
+    vertices.push_back(b2);
+    vertices.push_back(b3);
+    normals.push_back(bn1);
+    normals.push_back(bn2);
+    normals.push_back(bn3);
+
+    t1 = createTriangle(o1, i1, i3, on1, in1, in3);
+    t2 = createTriangle(o2, i2, i1, on2, in2, in1);
+    t3 = createTriangle(o3, i3, i2, on3, in3, in2);
+    t4 = createTriangle(i1, i2, i3, in1, in2, in3);
+
+    new_triangles.push_back(t1);
+    new_triangles.push_back(t2);
+    new_triangles.push_back(t3);
+    new_triangles.push_back(t4);
+  }
+
+  triangles = new_triangles;
+  curve_object(--count);
+}
 
 // Assumes only triangles, and that file contains only vertex and face lines.
 void read_obj_file(const char* filename)
@@ -159,6 +284,8 @@ int main(int argc, char **argv)
   // Read obj file given as argument.
   read_obj_file(argv[1]);
 
+  // Curve it!
+  curve_object(1);
   
   // Set up glut.
   glutInit(&argc, argv);

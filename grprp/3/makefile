@@ -1,2 +1,2 @@
 compile: topic_3.cpp
-	gcc topic_3.cpp -lm -lglut -lGLU -lGL -lstdc++ -o topic_3
+	gcc topic_3.cpp -lm -framework GLUT -framework OpenGL -lstdc++ -o topic_3

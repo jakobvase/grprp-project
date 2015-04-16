@@ -5,7 +5,7 @@
 #include <limits>
 #include <string>
 #include <cmath>
-#include <GL/glut.h>
+#include <GLUT/glut.h>
 
 using namespace std;
 
