@@ -1,0 +1,2 @@
+/Users/vase/repos/grprp-project/TriangleTess/bin/CMakeFiles/PezEcosystem.dir
+/Users/vase/repos/grprp-project/TriangleTess/bin/CMakeFiles/Geodesic.dir

@@ -2,9 +2,15 @@
 
 !*/
 !.gitignore
-!*makefile
+!*[Mm]akefile
+!*[Mm]akefile2
 !*.txt
 !*.c
 !*.cpp
 !*.obj
-
+!*.glsl
+!*.cmake
+!*.make
+!*.h
+!*LICENSE
+!*.m

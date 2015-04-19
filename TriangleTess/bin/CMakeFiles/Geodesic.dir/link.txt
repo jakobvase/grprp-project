@@ -1,0 +1,1 @@
+/Library/Developer/CommandLineTools/usr/bin/cc   -Wl,-search_paths_first -Wl,-headerpad_max_install_names  CMakeFiles/Geodesic.dir/Geodesic.c.o  -o Geodesic  libPezEcosystem.a -framework Cocoa -framework OpenGL 
