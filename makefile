@@ -1,11 +1,8 @@
-compile: topic_1.cpp
-	gcc topic_1.cpp -std=c++11 -lm -lglut -lGLU -lGL -lstdc++ -pthread -o topic_1
+compile: shader_curver.cpp
+	gcc shader_curver.cpp -std=c++11 -lm -lglut -lGLU -lGL -lstdc++ -pthread -o shader_curver
 
-debug: topic_1.cpp
-	gcc -g topic_1.cpp -lm -lglut -lGLU -lGL -lstdc++ -o topic_1
+debug: shader_curver.cpp
+	gcc -g shader_curver.cpp -lm -lglut -lGLU -lGL -lstdc++ -o shader_curver
 
-mac: curved_surface_calculator.cpp
-	gcc curved_surface_calculator.cpp -lm -framework GLUT -framework OpenGL -lstdc++ -o curved_surface_calculator
-
-mac2: topic_1.cpp
-	gcc topic_1.cpp -lm -framework GLUT -framework OpenGL -lstdc++ -o topic_1
+mac: shader_curver.cpp
+	gcc shader_curver.cpp -lm -framework GLUT -framework OpenGL -lstdc++ -o shader_curver
