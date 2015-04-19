@@ -5,7 +5,11 @@
 #include <limits>
 #include <string>
 #include <cmath>
+#ifdef __linux__
+#include <GL/glut.h>
+#else
 #include <GLUT/glut.h>
+#endif
 
 using namespace std;
 
