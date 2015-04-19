@@ -42,22 +42,17 @@ GLuint curves_vertex;
 GLuint curves_fragment;
 
 static const char *vertex_source = {
-"in vec4 Position;"
-"out vec3 vPosition;"
-""
 "void main()"
 "{"
-"    vPosition = Position.xyz;"
+"    gl_Position = gl_ModelViewProjectionMatrix*gl_Vertex;"
 "}"
 };
 
 
 static const char *fragment_source = {
-"out vec4 FragColor;"
-""
 "void main()"
 "{"
-"    FragColor = vec4(1.0, 0.0, 0.0, 1.0);"
+"    gl_FragColor = vec4(0.0, 1.0, 1.0, 1.0);"
 "}"
 };
 
@@ -281,7 +276,7 @@ void draw_obj(void)
     n = scale(add(n1, add(n2, n3)), 0.333333);
     /**/
 
-
+    glUseProgram(curves_program);
     // Draw this triangle.
     glBegin(GL_TRIANGLES);
     /**/
@@ -299,6 +294,7 @@ void draw_obj(void)
     glVertex3f(v3.x, v3.y, v3.z);
     /**/
     glEnd();
+    glUseProgram(0);
   }
 }
 
@@ -339,18 +335,27 @@ void initShaders() {
 
   /**/
   curves_program = glCreateProgram();
-  /**
+  /**/
   curves_vertex = glCreateShader(GL_VERTEX_SHADER);
   curves_fragment = glCreateShader(GL_FRAGMENT_SHADER);
-  /**
+  /**/
   glShaderSource(curves_vertex, 1, &vertex_source, NULL);
   glShaderSource(curves_fragment, 1, &fragment_source, NULL);
 
   glCompileShader(curves_vertex);
   glCompileShader(curves_fragment);
+
   glAttachShader(curves_program, curves_vertex);
   glAttachShader(curves_program, curves_fragment);
   glLinkProgram(curves_program);
+
+  GLint prog_link_success;
+  glGetObjectParameterivARB(curves_program, GL_OBJECT_LINK_STATUS_ARB, &prog_link_success);
+  if (!prog_link_success) {
+    fprintf(stderr, "The shaders could not be linked\n");
+    exit(1);
+  }
+
   /**/
 }
 
@@ -372,6 +377,12 @@ int main(int argc, char **argv)
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
   glutCreateWindow("Topic 1");
+
+  GLenum err = glewInit();
+  if (err != GLEW_OK)
+    exit(1); // or handle the error in a nicer way
+  if (!GLEW_VERSION_2_1)  // check that the machine supports the 2.1 API.
+    exit(1); // or handle the error in a nicer way
 
   initShaders();
 
