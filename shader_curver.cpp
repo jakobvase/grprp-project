@@ -42,17 +42,20 @@ GLuint curves_vertex;
 GLuint curves_fragment;
 
 static const char *vertex_source = {
+"varying vec3 normal;"
 "void main()"
 "{"
+"    normal = gl_Normal;"
 "    gl_Position = gl_ModelViewProjectionMatrix*gl_Vertex;"
 "}"
 };
 
 
 static const char *fragment_source = {
+"varying vec3 normal;"
 "void main()"
 "{"
-"    gl_FragColor = vec4(0.0, 1.0, 1.0, 1.0);"
+"    gl_FragColor = vec4(normal, 1.0);"
 "}"
 };
 
