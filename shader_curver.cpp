@@ -6,7 +6,11 @@
 #include <string>
 #include <cmath>
 #ifdef __linux__
+#include <GL/glew.h>
 #include <GL/glut.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
+#include <GL/glext.h>
 #else
 #include <GLUT/glut.h>
 #endif
@@ -32,6 +36,30 @@ struct triangle {
 vector<vertex> vertices;
 vector<triangle> triangles;
 vector<vertex> normals;
+
+GLuint curves_program;
+GLuint curves_vertex;
+GLuint curves_fragment;
+
+static const char *vertex_source = {
+"in vec4 Position;"
+"out vec3 vPosition;"
+""
+"void main()"
+"{"
+"    vPosition = Position.xyz;"
+"}"
+};
+
+
+static const char *fragment_source = {
+"out vec4 FragColor;"
+""
+"void main()"
+"{"
+"    FragColor = vec4(1.0, 0.0, 0.0, 1.0);"
+"}"
+};
 
 void normalize(vertex& v)
 {
@@ -253,6 +281,7 @@ void draw_obj(void)
     n = scale(add(n1, add(n2, n3)), 0.333333);
     /**/
 
+
     // Draw this triangle.
     glBegin(GL_TRIANGLES);
     /**/
@@ -303,6 +332,26 @@ void init_scene(void)
 
   // Rotate object.
   glRotatef(30, 0.0, 1.0, 0.0);
+
+}
+
+void initShaders() {
+
+  /**/
+  curves_program = glCreateProgram();
+  /**
+  curves_vertex = glCreateShader(GL_VERTEX_SHADER);
+  curves_fragment = glCreateShader(GL_FRAGMENT_SHADER);
+  /**
+  glShaderSource(curves_vertex, 1, &vertex_source, NULL);
+  glShaderSource(curves_fragment, 1, &fragment_source, NULL);
+
+  glCompileShader(curves_vertex);
+  glCompileShader(curves_fragment);
+  glAttachShader(curves_program, curves_vertex);
+  glAttachShader(curves_program, curves_fragment);
+  glLinkProgram(curves_program);
+  /**/
 }
 
 int main(int argc, char **argv)
@@ -323,6 +372,9 @@ int main(int argc, char **argv)
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
   glutCreateWindow("Topic 1");
+
+  initShaders();
+
   glutDisplayFunc(display);
 
   // Initialize scene.
