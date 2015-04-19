@@ -12,7 +12,11 @@
 #include <GL/glu.h>
 #include <GL/glext.h>
 #else
+#include <GL/glew.h>
 #include <GLUT/glut.h>
+#include <OpenGL/gl.h>
+#include <OpenGL/glu.h>
+#include <OpenGL/glext.h>
 #endif
 
 using namespace std;
