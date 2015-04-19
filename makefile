@@ -5,4 +5,4 @@ debug: shader_curver.cpp
 	gcc -g shader_curver.cpp -lm -lglut -lGLU -lGL -lstdc++ -o shader_curver
 
 mac: shader_curver.cpp
-	gcc shader_curver.cpp -lm -framework GLUT -framework OpenGL -lstdc++ -o shader_curver
+	gcc shader_curver.cpp -lm -framework GLUT -framework GLEW -framework OpenGL -lstdc++ -o shader_curver
