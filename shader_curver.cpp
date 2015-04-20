@@ -187,8 +187,7 @@ void init_scene(void)
 
 }
 
-static void show_info_log(
-  GLuint object,
+static void show_info_log(GLuint object,
   PFNGLGETSHADERIVPROC glGet__iv,
   PFNGLGETSHADERINFOLOGPROC glGet__InfoLog) {
   GLint log_length;
@@ -199,6 +198,16 @@ static void show_info_log(
   glGet__InfoLog(object, log_length, NULL, log);
   fprintf(stderr, "%s", log);
   free(log);
+}
+
+static void verify_shader(GLuint shader, char *name) {
+  GLint shader_ok;
+  glGetShaderiv(shader, GL_COMPILE_STATUS, &shader_ok);
+  if (!shader_ok) {
+    fprintf(stderr, "Failed to compile %s:\n", name);
+    show_info_log(shader, glGetShaderiv, glGetShaderInfoLog);
+    //glDeleteShader(shader);
+  }
 }
 
 void initShaders() {
@@ -225,17 +234,10 @@ void initShaders() {
   glShaderSource(curves_fragment, 1, &fragment_source_pointer, NULL);
 
   glCompileShader(curves_vertex);
-
-  GLint shader_ok;
-  glGetShaderiv(curves_vertex, GL_COMPILE_STATUS, &shader_ok);
-  if (!shader_ok) {
-    fprintf(stderr, "Failed to compile %s:\n", "vertex");
-    show_info_log(curves_vertex, glGetShaderiv, glGetShaderInfoLog);
-    glDeleteShader(curves_vertex);
-    exit(1);
-  }
-
+  verify_shader(curves_vertex, "vertex");
+  
   glCompileShader(curves_fragment);
+  verify_shader(curves_fragment, "fragment");
 
   glAttachShader(curves_program, curves_vertex);
   glAttachShader(curves_program, curves_fragment);
