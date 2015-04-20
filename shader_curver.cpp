@@ -23,23 +23,13 @@
 #include <OpenGL/glext.h>
 #endif
 
+#include "vertex.cpp"
+#include "file_functions.cpp"
+
 using namespace std;
+using namespace vertex_math;
 
 #define LINE_SIZE (256)
-
-struct vertex {
-  double x;
-  double y;
-  double z;
-};
-struct triangle {
-  int i1;
-  int i2;
-  int i3;
-  int n1;
-  int n2;
-  int n3;
-};
 
 vector<vertex> vertices;
 vector<triangle> triangles;
@@ -55,90 +45,6 @@ vector<char> fragment_source;
 vector<char> vertex_source;
 const char *vertex_source_pointer;
 const char *fragment_source_pointer;
-
-vector<char> readFileToCharVector(string file) {
-  std::ifstream in(file);
-  in.seekg(0, std::ios::end);
-  int length = in.tellg();
-  in.seekg(0, std::ios::beg);
-  std::vector<char> contents((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
-  contents.push_back('\0');
-  contents.resize(length);
-  cout << contents.size() << "\n";
-  cout << &contents[0] << "\n";
-  return contents;
-}
-
-void normalize(vertex& v)
-{
-  float length = sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
-  v.x /= length;
-  v.y /= length;
-  v.z /= length;
-}
-
-float dot(vertex v1, vertex v2)
-{
-  double result = v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
-
-  return result;
-}
-
-vertex cross(vertex v1, vertex v2) {
-  vertex cr;
-  cr.x = v1.y * v2.z - v1.z * v2.y;
-  cr.y = v1.z * v2.x - v1.x * v2.z;
-  cr.z = v1.x * v2.y - v1.y * v2.x;
-  return cr;
-}
-
-vertex subtract(vertex v1, vertex v2) {
-  vertex sub;
-  sub.x = v1.x - v2.x;
-  sub.y = v1.y - v2.y;
-  sub.z = v1.z - v2.z;
-  return sub;
-}
-
-vertex add(vertex v1, vertex v2) {
-  vertex sub;
-  sub.x = v1.x + v2.x;
-  sub.y = v1.y + v2.y;
-  sub.z = v1.z + v2.z;
-  return sub;
-}
-
-vertex scale(vertex v, double s) {
-  vertex sub;
-  sub.x = v.x * s;
-  sub.y = v.y * s;
-  sub.z = v.z * s;
-  return sub;
-}
-
-vertex bezier(vertex v1, vertex v2, vertex n1, vertex n2) {
-  vertex b, t1, t2, e1, e2;
-  e1 = subtract(v2, v1);
-  e2 = subtract(v1, v2);
-  t1 = add(v1, cross(cross(n1, e1), n1)); // Create the vector pointing toward the curve.
-  t2 = add(v2, cross(cross(n2, e2), n2));
-  normalize(t1);
-  normalize(t2);
-  b = add(scale(v1, .125), add(scale(t1, .375), add(scale(t2, .375), scale(v2, .125))));
-  //b = scale(add(v1, v2), .5);
-  return b;
-}
-
-triangle createTriangle(int v1, int v2, int v3, int n1, int n2, int n3) {
-  triangle t;
-  t.i1 = v1;
-  t.i2 = v2;
-  t.i3 = v3;
-  t.n1 = n1;
-  t.n2 = n2;
-  t.n3 = n3;
-  return t;
-}
 
 void curve_object(int count) {
   if(count <= 0) return;
@@ -202,58 +108,6 @@ void curve_object(int count) {
   curve_object(--count);
 }
 
-// Assumes only triangles, and that file contains only vertex and face lines.
-void read_obj_file(const char* filename)
-{
-  ifstream ifs;
-  string first_word;
-  string line;
-  vertex new_vertex;
-  triangle new_triangle;
-
-  // Open file.
-  ifs.open(filename);
-
-  // Process file, one line at a time.
-  do {
-    // Start a line, and process it if the file's not empty.
-    first_word.clear();  // (Then if line is empty, first_word won't persist from last line.)
-    ifs >> first_word;
-    if (ifs.eof() == false) {
-      if (first_word == "v") {
-	      // Read a vertex line.
-	      ifs >> new_vertex.x >> new_vertex.y >> new_vertex.z;
-	      vertices.push_back(new_vertex);
-      }
-      else if (first_word == "f") {
-	      // Read a face line.
-        ifs >> new_triangle.i1 >> new_triangle.n1 >> new_triangle.i2 >> new_triangle.n2 >> new_triangle.i3 >> new_triangle.n3;
-
-	      // Decrement indices from [1,n] in obj file to [0,n-1] in vertex vector.
-        new_triangle.i1 --;
-        new_triangle.i2 --;
-        new_triangle.i3 --;
-        new_triangle.n1 --;
-        new_triangle.n2 --;
-        new_triangle.n3 --;
-
-	      triangles.push_back(new_triangle);
-        //cout << new_triangle.n1 << new_triangle.n2 << new_triangle.n3 << "\n";
-      }
-      else if (first_word == "vn") {
-        ifs >> new_vertex.x >> new_vertex.y >> new_vertex.z;
-        normalize(new_vertex);
-        normals.push_back(new_vertex);
-      }
-      // Get rid of anything left on this line (including the newline).
-      ifs.ignore(numeric_limits<streamsize>::max(), '\n');
-    }
-  } while (ifs.eof() == false);
-
-  // Close file.
-  ifs.close();
-}
-
 void draw_obj(void)
 {
   vertex v1, v2, v3, n1, n2, n3;
@@ -274,25 +128,7 @@ void draw_obj(void)
     n2 = normals.at(triangles.at(i).n2);
     n3 = normals.at(triangles.at(i).n3);
 
-    /**
-    // e1 is edge from v1 to v2.
-    e1.x = v2.x - v1.x;
-    e1.y = v2.y - v1.y;
-    e1.z = v2.z - v1.z;
-
-    // e2 is edge from v1 to v3.
-    e2.x = v3.x - v1.x;
-    e2.y = v3.y - v1.y;
-    e2.z = v3.z - v1.z;
-
-    // normal is e1 x e2.  (Note: Does not need to be unit length for glNormal.)
-    n.x = (e1.y * e2.z) - (e1.z * e2.y);
-    n.y = (e1.z * e2.x) - (e1.x * e2.z);
-    n.z = (e1.x * e2.y) - (e1.y * e2.x);
-    /**/
-    /**/
     n = scale(add(n1, add(n2, n3)), 0.333333);
-    /**/
 
     // Draw this triangle.
     glBegin(GL_TRIANGLES);
@@ -429,7 +265,7 @@ int main(int argc, char **argv)
   }
 
   // Read obj file given as argument.
-  read_obj_file(argv[1]);
+  read_obj_file(argv[1], vertices, normals, triangles);
 
   // Curve it!
   curve_object(stoi(argv[2]));

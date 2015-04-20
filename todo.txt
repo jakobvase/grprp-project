@@ -1,4 +1,4 @@
-Parse shaders from external files
+Parse shaders from external files - DONE!
 
 Write tesselation shaders
 	Nurb calculation to tesselation shaders
