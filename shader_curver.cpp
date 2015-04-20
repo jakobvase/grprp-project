@@ -5,6 +5,7 @@
 #include <limits>
 #include <string>
 #include <cmath>
+#include <time.h>
 #ifdef __linux__
 #include <GL/glew.h>
 #include <GL/glut.h>
@@ -36,6 +37,8 @@ struct triangle {
 vector<vertex> vertices;
 vector<triangle> triangles;
 vector<vertex> normals;
+
+int t;
 
 GLuint curves_program;
 GLuint curves_vertex;
@@ -250,6 +253,11 @@ void draw_obj(void)
   vertex e1, e2;
   vertex n;
 
+
+  glPushMatrix();
+  glRotatef((clock() - t) / 5e4, 0.0, 1.0, 0.0);
+  glUseProgram(curves_program);
+
   for (int i = 0; i < triangles.size(); ++i) {
     // Read vertices out of triangles vector.
     v1 = vertices.at(triangles.at(i).i1);
@@ -279,7 +287,6 @@ void draw_obj(void)
     n = scale(add(n1, add(n2, n3)), 0.333333);
     /**/
 
-    glUseProgram(curves_program);
     // Draw this triangle.
     glBegin(GL_TRIANGLES);
     /**/
@@ -297,8 +304,10 @@ void draw_obj(void)
     glVertex3f(v3.x, v3.y, v3.z);
     /**/
     glEnd();
-    glUseProgram(0);
   }
+
+  glUseProgram(0);
+  glPopMatrix();
 }
 
 void display(void)
@@ -306,6 +315,7 @@ void display(void)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   draw_obj();
   glutSwapBuffers();
+  glutPostRedisplay();
 }
 
 void init_scene(void)
@@ -393,6 +403,8 @@ int main(int argc, char **argv)
 
   // Initialize scene.
   init_scene();
+
+  t = clock();
 
   // Hand control over to glut's main loop.
   glutMainLoop();
