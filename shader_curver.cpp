@@ -296,13 +296,13 @@ void draw_obj(void)
 
     // Draw this triangle.
     glBegin(GL_TRIANGLES);
-    /**/
+    /**
     glNormal3f(n.x, n.y, n.z);
     glVertex3f(v1.x, v1.y, v1.z);
     glVertex3f(v2.x, v2.y, v2.z);
     glVertex3f(v3.x, v3.y, v3.z);
     /**/
-    /*
+    /**/
     glNormal3f(n1.x, n1.y, n1.z);
     glVertex3f(v1.x, v1.y, v1.z);
     glNormal3f(n2.x, n2.y, n2.z);
@@ -351,6 +351,20 @@ void init_scene(void)
 
 }
 
+static void show_info_log(
+  GLuint object,
+  PFNGLGETSHADERIVPROC glGet__iv,
+  PFNGLGETSHADERINFOLOGPROC glGet__InfoLog) {
+  GLint log_length;
+  char *log;
+
+  glGet__iv(object, GL_INFO_LOG_LENGTH, &log_length);
+  log = (char*)malloc(log_length);
+  glGet__InfoLog(object, log_length, NULL, log);
+  fprintf(stderr, "%s", log);
+  free(log);
+}
+
 void initShaders() {
 
   /**/
@@ -375,6 +389,16 @@ void initShaders() {
   glShaderSource(curves_fragment, 1, &fragment_source_pointer, NULL);
 
   glCompileShader(curves_vertex);
+
+  GLint shader_ok;
+  glGetShaderiv(curves_vertex, GL_COMPILE_STATUS, &shader_ok);
+  if (!shader_ok) {
+    fprintf(stderr, "Failed to compile %s:\n", "vertex");
+    show_info_log(curves_vertex, glGetShaderiv, glGetShaderInfoLog);
+    glDeleteShader(curves_vertex);
+    exit(1);
+  }
+
   glCompileShader(curves_fragment);
 
   glAttachShader(curves_program, curves_vertex);
