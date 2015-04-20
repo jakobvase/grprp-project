@@ -5,6 +5,10 @@
 #include <limits>
 #include <string>
 #include <cmath>
+#include <time.h>
+#include <cstdio>
+#include <stdlib.h>
+
 #ifdef __linux__
 #include <GL/glew.h>
 #include <GL/glut.h>
@@ -41,6 +45,8 @@ vector<vertex> vertices;
 vector<triangle> triangles;
 vector<vertex> normals;
 
+int t;
+
 GLuint curves_program;
 GLuint curves_vertex;
 GLuint curves_fragment;
@@ -52,10 +58,16 @@ const char *fragment_source_pointer;
 
 vector<char> readFileToCharVector(string file) {
   std::ifstream in(file);
+  in.seekg(0, std::ios::end);
+  int length = in.tellg();
+  in.seekg(0, std::ios::beg);
   std::vector<char> contents((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+  contents.push_back('\0');
+  contents.resize(length);
+  cout << contents.size() << "\n";
+  cout << &contents[0] << "\n";
   return contents;
 }
-
 
 void normalize(vertex& v)
 {
@@ -248,6 +260,11 @@ void draw_obj(void)
   vertex e1, e2;
   vertex n;
 
+
+  glPushMatrix();
+  glRotatef((clock() - t) / 5e4, 0.0, 1.0, 0.0);
+  glUseProgram(curves_program);
+
   for (int i = 0; i < triangles.size(); ++i) {
     // Read vertices out of triangles vector.
     v1 = vertices.at(triangles.at(i).i1);
@@ -277,7 +294,6 @@ void draw_obj(void)
     n = scale(add(n1, add(n2, n3)), 0.333333);
     /**/
 
-    glUseProgram(curves_program);
     // Draw this triangle.
     glBegin(GL_TRIANGLES);
     /**/
@@ -295,8 +311,10 @@ void draw_obj(void)
     glVertex3f(v3.x, v3.y, v3.z);
     /**/
     glEnd();
-    glUseProgram(0);
   }
+
+  glUseProgram(0);
+  glPopMatrix();
 }
 
 void display(void)
@@ -304,6 +322,7 @@ void display(void)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   draw_obj();
   glutSwapBuffers();
+  glutPostRedisplay();
 }
 
 void init_scene(void)
@@ -340,15 +359,17 @@ void initShaders() {
   curves_vertex = glCreateShader(GL_VERTEX_SHADER);
   curves_fragment = glCreateShader(GL_FRAGMENT_SHADER);
 
+  /*GLint length;
+  GLchar *source = file_contents("vertex.glsl", &length);
+  cout << source << "\n";*/
+
   vertex_source = readFileToCharVector("vertex.glsl");
   fragment_source = readFileToCharVector("fragment.glsl");
-  vertex_source.shrink_to_fit();
-  fragment_source.shrink_to_fit();
   vertex_source_pointer = &vertex_source[0];
   fragment_source_pointer = &fragment_source[0];
 
-  cout << vertex_source_pointer << "\n";
-  cout << fragment_source_pointer << "\n";
+  /*cout << vertex_source_pointer << "\n";
+  cout << fragment_source_pointer << "\n";*/
 
   glShaderSource(curves_vertex, 1, &vertex_source_pointer, NULL);
   glShaderSource(curves_fragment, 1, &fragment_source_pointer, NULL);
@@ -366,6 +387,11 @@ void initShaders() {
     fprintf(stderr, "The shaders could not be linked\n");
     exit(1);
   }
+
+  GLint MaxPatchVertices = 0;
+  glGetIntegerv(GL_MAX_PATCH_VERTICES, &MaxPatchVertices);
+  printf("Max supported patch vertices %d\n", MaxPatchVertices);  
+  glPatchParameteri(GL_PATCH_VERTICES, 3);
 
   /**/
 }
@@ -401,6 +427,8 @@ int main(int argc, char **argv)
 
   // Initialize scene.
   init_scene();
+
+  t = clock();
 
   // Hand control over to glut's main loop.
   glutMainLoop();
