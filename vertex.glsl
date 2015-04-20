@@ -1,7 +1,7 @@
-in vec4 Position;
-out vec3 vPosition;
+varying vec3 normal;
 
 void main()
 {
-    vPosition = Position.xyz;
+	normal = gl_Normal;
+	gl_Position = gl_ModelViewProjectionMatrix*gl_Vertex;
 }

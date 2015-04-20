@@ -1,0 +1,12 @@
+Parse shaders from external files
+
+Write tesselation shaders
+	Nurb calculation to tesselation shaders
+
+Cleanup shader_curver.cpp
+
+More complicated .obj file
+
+Rotate object
+
+Change direction of original vertex normal

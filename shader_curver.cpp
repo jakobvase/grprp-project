@@ -45,23 +45,17 @@ GLuint curves_program;
 GLuint curves_vertex;
 GLuint curves_fragment;
 
-static const char *vertex_source = {
-"varying vec3 normal;"
-"void main()"
-"{"
-"    normal = gl_Normal;"
-"    gl_Position = gl_ModelViewProjectionMatrix*gl_Vertex;"
-"}"
-};
+vector<char> fragment_source;
+vector<char> vertex_source;
+const char *vertex_source_pointer;
+const char *fragment_source_pointer;
 
+vector<char> readFileToCharVector(string file) {
+  std::ifstream in(file);
+  std::vector<char> contents((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+  return contents;
+}
 
-static const char *fragment_source = {
-"varying vec3 normal;"
-"void main()"
-"{"
-"    gl_FragColor = vec4(normal, 1.0);"
-"}"
-};
 
 void normalize(vertex& v)
 {
@@ -345,9 +339,19 @@ void initShaders() {
   /**/
   curves_vertex = glCreateShader(GL_VERTEX_SHADER);
   curves_fragment = glCreateShader(GL_FRAGMENT_SHADER);
-  /**/
-  glShaderSource(curves_vertex, 1, &vertex_source, NULL);
-  glShaderSource(curves_fragment, 1, &fragment_source, NULL);
+
+  vertex_source = readFileToCharVector("vertex.glsl");
+  fragment_source = readFileToCharVector("fragment.glsl");
+  vertex_source.shrink_to_fit();
+  fragment_source.shrink_to_fit();
+  vertex_source_pointer = &vertex_source[0];
+  fragment_source_pointer = &fragment_source[0];
+
+  cout << vertex_source_pointer << "\n";
+  cout << fragment_source_pointer << "\n";
+
+  glShaderSource(curves_vertex, 1, &vertex_source_pointer, NULL);
+  glShaderSource(curves_fragment, 1, &fragment_source_pointer, NULL);
 
   glCompileShader(curves_vertex);
   glCompileShader(curves_fragment);
