@@ -5,6 +5,7 @@
 #include <limits>
 #include <string>
 #include <cmath>
+#include <ctime>
 #ifdef __linux__
 #include <GL/glut.h>
 #else
@@ -33,12 +34,18 @@ vector<vertex> vertices;
 vector<triangle> triangles;
 vector<vertex> normals;
 
+int t;
+
 void normalize(vertex& v)
 {
   float length = sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
   v.x /= length;
   v.y /= length;
   v.z /= length;
+}
+
+float length(vertex v) {
+  return sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
 }
 
 float dot(vertex v1, vertex v2)
@@ -80,17 +87,27 @@ vertex scale(vertex v, double s) {
   return sub;
 }
 
-vertex bezier(vertex v1, vertex v2, vertex n1, vertex n2) {
-  vertex b, t1, t2, e1, e2;
+void bezier(vertex v1, vertex v2, vertex n1, vertex n2, vertex& v, vertex& n) {
+  vertex t1, t2, e1, e2, t;
   e1 = subtract(v2, v1);
   e2 = subtract(v1, v2);
-  t1 = add(v1, cross(cross(n1, e1), n1)); // Create the vector pointing toward the curve.
-  t2 = add(v2, cross(cross(n2, e2), n2));
+  t1 = cross(cross(n1, e1), n1); // Create the vector pointing toward the curve.
+  t2 = cross(cross(n2, e2), n2);
   normalize(t1);
   normalize(t2);
-  b = add(scale(v1, .125), add(scale(t1, .375), add(scale(t2, .375), scale(v2, .125))));
-  //b = scale(add(v1, v2), .5);
-  return b;
+  float l = length(e1);
+  t1 = scale(t1, l / 3);
+  t2 = scale(t2, l / 3);
+  v = add(scale(v1, .125), add(scale(add(v1, t1), .375), add(scale(add(v2, t2), .375), scale(v2, .125))));
+  t = add(scale(subtract(add(v1, t1), v1), 0.75), add(scale(subtract(add(v2, t2), add(v1, t1)), 1.5), scale(subtract(v2, add(v2, t2)), 0.75)));
+  n = cross(t, add(cross(n1, e1), cross(n2, e1)));
+  //n = add(n1, n2);
+  normalize(n);
+}
+
+vertex bezierNorm(vertex v1, vertex v2, vertex n1, vertex n2) {
+  vertex n, t1, t2, e1, e2, s;
+  return n;
 }
 
 triangle createTriangle(int v1, int v2, int v3, int n1, int n2, int n3) {
@@ -127,15 +144,17 @@ void curve_object(int count) {
     n2 = normals.at(on2);
     n3 = normals.at(on3);
 
-    b1 = bezier(v1, v2, n1, n2);
-    b2 = bezier(v2, v3, n2, n3);
-    b3 = bezier(v3, v1, n3, n1);
+    bezier(v1, v2, n1, n2, b1, bn1);
+    bezier(v2, v3, n2, n3, b2, bn2);
+    bezier(v3, v1, n3, n1, b3, bn3);
+    /**
     bn1 = scale(add(n1, n2), 1);
     bn2 = scale(add(n2, n3), 1);
     bn3 = scale(add(n3, n1), 1);
     normalize(bn1);
     normalize(bn2);
     normalize(bn3);
+    /**/
 
     i1 = vertices.size();
     i2 = i1 + 1;
@@ -224,6 +243,9 @@ void draw_obj(void)
   vertex e1, e2;
   vertex n;
 
+  glPushMatrix();
+  glRotatef((clock() - t) / 5e4, 0.0, 1.0, 0.0);
+
   for (int i = 0; i < triangles.size(); ++i) {
     // Read vertices out of triangles vector.
     v1 = vertices.at(triangles.at(i).i1);
@@ -271,6 +293,7 @@ void draw_obj(void)
     /**/
     glEnd();
   }
+  glPopMatrix();
 }
 
 void display(void)
@@ -278,6 +301,7 @@ void display(void)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   draw_obj();
   glutSwapBuffers();
+  glutPostRedisplay();
 }
 
 void init_scene(void)
@@ -327,6 +351,8 @@ int main(int argc, char **argv)
 
   // Initialize scene.
   init_scene();
+
+  t = clock();
 
   // Hand control over to glut's main loop.
   glutMainLoop();
