@@ -6,6 +6,11 @@
 #include <string>
 #include <cmath>
 #include <ctime>
+
+// http://glm.g-truc.net/0.9.6/index.html
+
+#include <glm/glm.hpp>
+
 #ifdef __linux__
 #include <GL/glut.h>
 #else
@@ -16,11 +21,6 @@ using namespace std;
 
 #define LINE_SIZE (256)
 
-struct vertex {
-  double x;
-  double y;
-  double z;
-};
 struct triangle {
   int i1;
   int i2;
@@ -30,12 +30,13 @@ struct triangle {
   int n3;
 };
 
-vector<vertex> vertices;
+vector<glm::vec3> vertices;
 vector<triangle> triangles;
-vector<vertex> normals;
+vector<glm::vec3> normals;
 
 int t;
 
+/**
 void normalize(vertex& v)
 {
   float length = sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
@@ -87,27 +88,25 @@ vertex scale(vertex v, double s) {
   return sub;
 }
 
-void bezier(vertex v1, vertex v2, vertex n1, vertex n2, vertex& v, vertex& n) {
-  vertex t1, t2, e1, e2, t;
-  e1 = subtract(v2, v1);
-  e2 = subtract(v1, v2);
-  t1 = cross(cross(n1, e1), n1); // Create the vector pointing toward the curve.
-  t2 = cross(cross(n2, e2), n2);
-  normalize(t1);
-  normalize(t2);
-  float l = length(e1);
-  t1 = scale(t1, l / 3);
-  t2 = scale(t2, l / 3);
-  v = add(scale(v1, .125), add(scale(add(v1, t1), .375), add(scale(add(v2, t2), .375), scale(v2, .125))));
-  t = add(scale(subtract(add(v1, t1), v1), 0.75), add(scale(subtract(add(v2, t2), add(v1, t1)), 1.5), scale(subtract(v2, add(v2, t2)), 0.75)));
-  n = cross(t, add(cross(n1, e1), cross(n2, e1)));
-  //n = add(n1, n2);
-  normalize(n);
-}
+/**/
 
-vertex bezierNorm(vertex v1, vertex v2, vertex n1, vertex n2) {
-  vertex n, t1, t2, e1, e2, s;
-  return n;
+void bezier(glm::vec3 v1, glm::vec3 v2, glm::vec3 n1, glm::vec3 n2, glm::vec3& v, glm::vec3& n) {
+  glm::vec3 t1, t2, e1, e2, t;
+  e1 = v2 - v1;
+  e2 = v1 - v2;
+  t1 = glm::cross(glm::cross(n1, e1), n1); // Create the vector pointing toward the curve.
+  t2 = glm::cross(glm::cross(n2, e2), n2);
+  t1 = glm::normalize(t1);
+  t2 = glm::normalize(t2);
+  float l = glm::length(e1);
+  t1 = glm::normalize(t1) * (l / 3);
+  t2 = glm::normalize(t2) * (l / 3);
+  v = (v1 * .125f) + ((v1 + t1) * .375f) + ((v2 + t2) * .375f) + (v2 * .125f);
+  t = ((v1 + t1 - v1) * .75f) + ((v2 + t2 - (v1 + t1)) * 1.5f) + ((v2 - (v2 + t2)) * .75f);
+  //t = add(scale(subtract(add(v1, t1), v1), 0.75), add(scale(subtract(add(v2, t2), add(v1, t1)), 1.5), scale(subtract(v2, add(v2, t2)), 0.75)));
+  n = glm::cross(t, glm::cross(n1, e1) + glm::cross(n2, e1));
+  //n = n1 + n2;
+  n = glm::normalize(n);
 }
 
 triangle createTriangle(int v1, int v2, int v3, int n1, int n2, int n3) {
@@ -123,7 +122,7 @@ triangle createTriangle(int v1, int v2, int v3, int n1, int n2, int n3) {
 
 void curve_object(int count) {
   if(count <= 0) return;
-  vertex v1, v2, v3, n1, n2, n3, b1, b2, b3, bn1, bn2, bn3;
+  glm::vec3 v1, v2, v3, n1, n2, n3, b1, b2, b3, bn1, bn2, bn3;
   int i1, i2, i3, in1, in2, in3, o1, o2, o3, on1, on2, on3;
   triangle t1, t2, t3, t4;
   vector<triangle> new_triangles;
@@ -191,7 +190,7 @@ void read_obj_file(const char* filename)
   ifstream ifs;
   string first_word;
   string line;
-  vertex new_vertex;
+  glm::vec3 new_vertex;
   triangle new_triangle;
 
   // Open file.
@@ -225,7 +224,7 @@ void read_obj_file(const char* filename)
       }
       else if (first_word == "vn") {
         ifs >> new_vertex.x >> new_vertex.y >> new_vertex.z;
-        normalize(new_vertex);
+        new_vertex = glm::normalize(new_vertex);
         normals.push_back(new_vertex);
       }
       // Get rid of anything left on this line (including the newline).
@@ -239,9 +238,9 @@ void read_obj_file(const char* filename)
 
 void draw_obj(void)
 {
-  vertex v1, v2, v3, n1, n2, n3;
-  vertex e1, e2;
-  vertex n;
+  glm::vec3 v1, v2, v3, n1, n2, n3;
+  glm::vec3 e1, e2;
+  glm::vec3 n;
 
   glPushMatrix();
   glRotatef((clock() - t) / 5e4, 0.0, 1.0, 0.0);
@@ -272,7 +271,7 @@ void draw_obj(void)
     n.z = (e1.x * e2.y) - (e1.y * e2.x);
     /**/
     /**/
-    n = scale(add(n1, add(n2, n3)), 0.333333);
+    n = (n1 + n2 + n3) * 0.3333f;
     /**/
 
     // Draw this triangle.
