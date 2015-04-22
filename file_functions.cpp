@@ -1,3 +1,5 @@
+#include <glm/glm.hpp>
+
 using namespace std;
 using namespace vertex_math;
 
@@ -15,12 +17,12 @@ vector<char> readFileToCharVector(string file) {
 }
 
 // Assumes only triangles, and that file contains only vertex and face lines.
-void read_obj_file(const char* filename, vector<vertex> vertices, vector<vertex> normals, vector<triangle> triangles)
+void read_obj_file(const char* filename, vector<glm::vec3> &vertices, vector<glm::vec3> &normals, vector<triangle> &triangles)
 {
   ifstream ifs;
   string first_word;
   string line;
-  vertex new_vertex;
+  glm::vec3 new_vertex;
   triangle new_triangle;
 
   // Open file.
@@ -54,7 +56,7 @@ void read_obj_file(const char* filename, vector<vertex> vertices, vector<vertex>
       }
       else if (first_word == "vn") {
         ifs >> new_vertex.x >> new_vertex.y >> new_vertex.z;
-        normalize(new_vertex);
+        new_vertex = glm::normalize(new_vertex);
         normals.push_back(new_vertex);
       }
       // Get rid of anything left on this line (including the newline).

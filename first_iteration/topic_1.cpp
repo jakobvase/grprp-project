@@ -244,6 +244,7 @@ void draw_obj(void)
 
   glPushMatrix();
   glRotatef((clock() - t) / 5e4, 0.0, 1.0, 0.0);
+  glBegin(GL_TRIANGLES);
 
   for (int i = 0; i < triangles.size(); ++i) {
     // Read vertices out of triangles vector.
@@ -275,14 +276,17 @@ void draw_obj(void)
     /**/
 
     // Draw this triangle.
-    glBegin(GL_TRIANGLES);
-    /**/
+    /**
     glNormal3f(n.x, n.y, n.z);
     glVertex3f(v1.x, v1.y, v1.z);
     glVertex3f(v2.x, v2.y, v2.z);
     glVertex3f(v3.x, v3.y, v3.z);
     /**/
-    /*
+    glNormal3fv(&n[0]);
+    glVertex3fv(&v1[0]);
+    glVertex3fv(&v2[0]);
+    glVertex3fv(&v3[0]);
+    /**
     glNormal3f(n1.x, n1.y, n1.z);
     glVertex3f(v1.x, v1.y, v1.z);
     glNormal3f(n2.x, n2.y, n2.z);
@@ -290,8 +294,8 @@ void draw_obj(void)
     glNormal3f(n3.x, n3.y, n3.z);
     glVertex3f(v3.x, v3.y, v3.z);
     /**/
-    glEnd();
   }
+  glEnd();
   glPopMatrix();
 }
 

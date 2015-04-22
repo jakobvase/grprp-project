@@ -9,6 +9,8 @@
 #include <cstdio>
 #include <stdlib.h>
 
+#include <glm/glm.hpp>
+
 #ifdef __linux__
 #include <GL/glew.h>
 #include <GL/glut.h>
@@ -31,9 +33,9 @@ using namespace vertex_math;
 
 #define LINE_SIZE (256)
 
-vector<vertex> vertices;
+vector<glm::vec3> vertices;
 vector<triangle> triangles;
-vector<vertex> normals;
+vector<glm::vec3> normals;
 
 int t;
 
@@ -48,7 +50,7 @@ const char *fragment_source_pointer;
 
 void curve_object(int count) {
   if(count <= 0) return;
-  vertex v1, v2, v3, n1, n2, n3, b1, b2, b3, bn1, bn2, bn3;
+  glm::vec3 v1, v2, v3, n1, n2, n3, b1, b2, b3, bn1, bn2, bn3;
   int i1, i2, i3, in1, in2, in3, o1, o2, o3, on1, on2, on3;
   triangle t1, t2, t3, t4;
   vector<triangle> new_triangles;
@@ -69,15 +71,9 @@ void curve_object(int count) {
     n2 = normals.at(on2);
     n3 = normals.at(on3);
 
-    b1 = bezier(v1, v2, n1, n2);
-    b2 = bezier(v2, v3, n2, n3);
-    b3 = bezier(v3, v1, n3, n1);
-    bn1 = scale(add(n1, n2), 1);
-    bn2 = scale(add(n2, n3), 1);
-    bn3 = scale(add(n3, n1), 1);
-    normalize(bn1);
-    normalize(bn2);
-    normalize(bn3);
+    bezier(v1, v2, n1, n2, b1, bn1);
+    bezier(v2, v3, n2, n3, b2, bn2);
+    bezier(v3, v1, n3, n1, b3, bn3);
 
     i1 = vertices.size();
     i2 = i1 + 1;
@@ -110,14 +106,15 @@ void curve_object(int count) {
 
 void draw_obj(void)
 {
-  vertex v1, v2, v3, n1, n2, n3;
-  vertex e1, e2;
-  vertex n;
+  glm::vec3 v1, v2, v3, n1, n2, n3;
+  glm::vec3 n;
 
 
   glPushMatrix();
   glRotatef((clock() - t) / 5e4, 0.0, 1.0, 0.0);
-  glUseProgram(curves_program);
+  glBegin(GL_TRIANGLES);
+
+  //cout << "drawing " << triangles.size() << " tris\n";
 
   for (int i = 0; i < triangles.size(); ++i) {
     // Read vertices out of triangles vector.
@@ -128,17 +125,20 @@ void draw_obj(void)
     n2 = normals.at(triangles.at(i).n2);
     n3 = normals.at(triangles.at(i).n3);
 
-    n = scale(add(n1, add(n2, n3)), 0.333333);
+    n = (n1 + n2 + n3) * 0.3333f;
 
     // Draw this triangle.
-    glBegin(GL_TRIANGLES);
     /**
     glNormal3f(n.x, n.y, n.z);
     glVertex3f(v1.x, v1.y, v1.z);
     glVertex3f(v2.x, v2.y, v2.z);
     glVertex3f(v3.x, v3.y, v3.z);
     /**/
-    /**/
+    glNormal3fv(&n[0]);
+    glVertex3fv(&v1[0]);
+    glVertex3fv(&v2[0]);
+    glVertex3fv(&v3[0]);
+    /**
     glNormal3f(n1.x, n1.y, n1.z);
     glVertex3f(v1.x, v1.y, v1.z);
     glNormal3f(n2.x, n2.y, n2.z);
@@ -146,10 +146,9 @@ void draw_obj(void)
     glNormal3f(n3.x, n3.y, n3.z);
     glVertex3f(v3.x, v3.y, v3.z);
     /**/
-    glEnd();
   }
 
-  glUseProgram(0);
+  glEnd();
   glPopMatrix();
 }
 
@@ -163,6 +162,9 @@ void display(void)
 
 void init_scene(void)
 {
+  //glUseProgram(0);
+
+  /**/
   // Configure a light.
   GLfloat light_diffuse[] = {1.0, 0.0, 0.0, 1.0};  // Red diffuse light.
   GLfloat light_position[] = {1.0, 4.0, 2.0, 0.0};  // Infinite light location.
@@ -170,6 +172,7 @@ void init_scene(void)
   glLightfv(GL_LIGHT0, GL_POSITION, light_position);
   glEnable(GL_LIGHT0);
   glEnable(GL_LIGHTING);
+  /**/
 
   // Use depth buffering for hidden surface elimination.
   glEnable(GL_DEPTH_TEST);
@@ -184,6 +187,7 @@ void init_scene(void)
 
   // Rotate object.
   glRotatef(30, 0.0, 1.0, 0.0);
+
 
 }
 
@@ -256,18 +260,25 @@ void initShaders() {
   glPatchParameteri(GL_PATCH_VERTICES, 3);
 
   /**/
+
+  glUseProgram(curves_program);
+
+
+
 }
 
 int main(int argc, char **argv)
 {
   // Check for proper arguments.
   if (argc < 3) {
-    cout << "usage: " << argv[0] << " <obj_filename>" << endl;
+    cout << "usage: " << argv[0] << " <obj_filename> <iterations>" << endl;
     exit(0);
   }
 
   // Read obj file given as argument.
   read_obj_file(argv[1], vertices, normals, triangles);
+
+  cout << "t" << triangles.size() << "v" << vertices.size() << "n" << normals.size() << "\n";
 
   // Curve it!
   curve_object(stoi(argv[2]));
@@ -275,8 +286,9 @@ int main(int argc, char **argv)
   // Set up glut.
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-  glutCreateWindow("Topic 1");
+  glutCreateWindow("Shader Curver");
 
+  /**/
   GLenum err = glewInit();
   if (err != GLEW_OK)
     exit(1); // or handle the error in a nicer way
@@ -284,6 +296,7 @@ int main(int argc, char **argv)
     exit(1); // or handle the error in a nicer way
 
   initShaders();
+  /**/
 
   glutDisplayFunc(display);
 

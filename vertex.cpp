@@ -1,12 +1,8 @@
 #include <cmath>
+#include <glm/glm.hpp>
 
 namespace vertex_math{
 
-  struct vertex {
-    double x;
-    double y;
-    double z;
-  };
   struct triangle {
     int i1;
     int i2;
@@ -16,53 +12,7 @@ namespace vertex_math{
     int n3;
   };
 
-  void normalize(vertex& v)
-  {
-    float length = sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
-    v.x /= length;
-    v.y /= length;
-    v.z /= length;
-  }
-
-  float dot(vertex v1, vertex v2)
-  {
-    double result = v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
-
-    return result;
-  }
-
-  vertex cross(vertex v1, vertex v2) {
-    vertex cr;
-    cr.x = v1.y * v2.z - v1.z * v2.y;
-    cr.y = v1.z * v2.x - v1.x * v2.z;
-    cr.z = v1.x * v2.y - v1.y * v2.x;
-    return cr;
-  }
-
-  vertex subtract(vertex v1, vertex v2) {
-    vertex sub;
-    sub.x = v1.x - v2.x;
-    sub.y = v1.y - v2.y;
-    sub.z = v1.z - v2.z;
-    return sub;
-  }
-
-  vertex add(vertex v1, vertex v2) {
-    vertex sub;
-    sub.x = v1.x + v2.x;
-    sub.y = v1.y + v2.y;
-    sub.z = v1.z + v2.z;
-    return sub;
-  }
-
-  vertex scale(vertex v, double s) {
-    vertex sub;
-    sub.x = v.x * s;
-    sub.y = v.y * s;
-    sub.z = v.z * s;
-    return sub;
-  }
-
+  /**
   vertex bezier(vertex v1, vertex v2, vertex n1, vertex n2) {
     vertex b, t1, t2, e1, e2;
     e1 = subtract(v2, v1);
@@ -74,6 +24,26 @@ namespace vertex_math{
     b = add(scale(v1, .125), add(scale(t1, .375), add(scale(t2, .375), scale(v2, .125))));
     //b = scale(add(v1, v2), .5);
     return b;
+  }
+  /**/
+
+  void bezier(glm::vec3 v1, glm::vec3 v2, glm::vec3 n1, glm::vec3 n2, glm::vec3& v, glm::vec3& n) {
+    glm::vec3 t1, t2, e1, e2, t;
+    e1 = v2 - v1;
+    e2 = v1 - v2;
+    t1 = glm::cross(glm::cross(n1, e1), n1); // Create the vector pointing toward the curve.
+    t2 = glm::cross(glm::cross(n2, e2), n2);
+    t1 = glm::normalize(t1);
+    t2 = glm::normalize(t2);
+    float l = glm::length(e1);
+    t1 = glm::normalize(t1) * (l / 3);
+    t2 = glm::normalize(t2) * (l / 3);
+    v = (v1 * .125f) + ((v1 + t1) * .375f) + ((v2 + t2) * .375f) + (v2 * .125f);
+    t = ((v1 + t1 - v1) * .75f) + ((v2 + t2 - (v1 + t1)) * 1.5f) + ((v2 - (v2 + t2)) * .75f);
+    //t = add(scale(subtract(add(v1, t1), v1), 0.75), add(scale(subtract(add(v2, t2), add(v1, t1)), 1.5), scale(subtract(v2, add(v2, t2)), 0.75)));
+    n = glm::cross(t, glm::cross(n1, e1) + glm::cross(n2, e1));
+    //n = n1 + n2;
+    n = glm::normalize(n);
   }
 
   triangle createTriangle(int v1, int v2, int v3, int n1, int n2, int n3) {
