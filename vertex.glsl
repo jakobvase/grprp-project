@@ -1,22 +1,22 @@
-/**
-in vec4 Position;
-in vec3 MCnormal;
+#version 140
+
+in vec4 Vertex;
+in vec3 Normal;
 
 uniform mat4 MVMatrix;
 uniform mat4 MVPMatrix;
-uniform mat3 NormalMatrix;
-
 uniform vec3 LightPosition;
-**/
-varying vec3 light;
+uniform vec3 LightColor;
+
+out vec3 light;
 
 void main()
 {
-    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+    gl_Position =  (MVPMatrix*MVMatrix)*Vertex;
 
-    vec3 normal = gl_NormalMatrix * gl_Normal;
-    vec3 to_light = gl_LightSource[0].position - (gl_ModelViewMatrix * gl_Vertex).xyz;
+    vec3 normal = (MVMatrix*vec4(Normal, 0.0)).xyz;
+    vec3 to_light = (MVMatrix*vec4(LightPosition, 0.0)).xyz - (MVMatrix*Vertex).xyz;
     vec3 n_to_light = normalize(to_light);
-    float intense = clamp(dot(normal, n_to_light), 0.0, 1.0);
-    light = vec3(gl_LightSource[0].diffuse * intense * 0.9 + 0.1);
+    float intense = clamp(dot(normal, n_to_light.xyz), 0.0, 1.0);
+    light = vec3(intense * LightColor * 0.9 + 0.1);
 }

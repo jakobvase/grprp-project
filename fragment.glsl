@@ -1,5 +1,5 @@
-
-varying vec3 light;
+#version 140
+in vec3 light;
 
 void main()
 {
