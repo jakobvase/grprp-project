@@ -7,6 +7,8 @@
 !*.txt
 !*.c
 !*.cpp
+!*.hpp
+!*.inl
 !*.obj
 !*.glsl
 !*.cmake
