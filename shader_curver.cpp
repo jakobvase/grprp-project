@@ -52,6 +52,7 @@ GLuint shader_mv;
 GLuint shader_mvp;
 GLuint shader_lpos;
 GLuint shader_lcolor;
+GLuint shader_normal;
 
 vector<char> fragment_source;
 vector<char> vertex_source;
@@ -122,9 +123,11 @@ void draw_obj(void)
 
   glPushMatrix();
   glRotatef((clock() - t) / 5e4, 0.0, 1.0, 0.0);
+  glm::mat4 rotated = glm::rotate(matrix_mv, (clock() - t) / 5e4f, glm::vec3(0.0f, 1.0f, 0.0f));
+  glm::mat4 projection = matrix_mvp * rotated;
 
-  glUniformMatrix4fv(shader_mv, 1, GL_FALSE, &matrix_mv[0][0]);
-  glUniformMatrix4fv(shader_mvp, 1, GL_FALSE, &matrix_mvp[0][0]);
+  glUniformMatrix4fv(shader_mv, 1, GL_FALSE, &rotated[0][0]);
+  glUniformMatrix4fv(shader_mvp, 1, GL_FALSE, &projection[0][0]);
   glUniform3f(shader_lpos, light_position.x, light_position.y, light_position.z);
   glUniform3f(shader_lcolor, light_color.x, light_color.y, light_color.z);
 
@@ -150,7 +153,8 @@ void draw_obj(void)
     glVertex3f(v2.x, v2.y, v2.z);
     glVertex3f(v3.x, v3.y, v3.z);
     /**/
-    glNormal3fv(&n[0]);
+    //glNormal3fv(&n[0]);
+    glVertexAttrib3fv(shader_normal, &n[0]);
     glVertex3fv(&v1[0]);
     glVertex3fv(&v2[0]);
     glVertex3fv(&v3[0]);
@@ -290,6 +294,7 @@ void initShaders() {
   shader_mvp = glGetUniformLocation(curves_program, "MVPMatrix");
   shader_lcolor = glGetUniformLocation(curves_program, "LightColor");
   shader_lpos = glGetUniformLocation(curves_program, "LightPosition");
+  shader_normal = glGetAttribLocation(curves_program, "Normal");
 
 }
 
