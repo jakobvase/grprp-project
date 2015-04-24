@@ -1,4 +1,4 @@
-#version 140
+#version 410
 in vec3 light;
 
 void main()
