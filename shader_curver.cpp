@@ -43,6 +43,8 @@ int t;
 GLuint curves_program;
 GLuint curves_vertex;
 GLuint curves_fragment;
+GLuint curves_tesscontrol;
+GLuint curves_tesseval;
 
 glm::mat4 matrix_mv;
 glm::mat4 matrix_mvp;
@@ -54,10 +56,16 @@ GLuint shader_lpos;
 GLuint shader_lcolor;
 GLuint shader_normal;
 
+/**/
 vector<char> fragment_source;
 vector<char> vertex_source;
+vector<char> tesscontrol_source;
+vector<char> tesseval_source;
 const char *vertex_source_pointer;
 const char *fragment_source_pointer;
+const char *tesscontrol_source_pointer;
+const char *tesseval_source_pointer;
+/**/
 
 void curve_object(int count) {
   if(count <= 0) return;
@@ -131,7 +139,9 @@ void draw_obj(void)
   glUniform3f(shader_lpos, light_position.x, light_position.y, light_position.z);
   glUniform3f(shader_lcolor, light_color.x, light_color.y, light_color.z);
 
-  glBegin(GL_TRIANGLES);
+  glPatchParameteri(GL_PATCH_VERTICES, 3);
+
+  glBegin(GL_PATCHES);
 
   //cout << "drawing " << triangles.size() << " tris\n";
 
@@ -248,6 +258,8 @@ void initShaders() {
   /**/
   curves_vertex = glCreateShader(GL_VERTEX_SHADER);
   curves_fragment = glCreateShader(GL_FRAGMENT_SHADER);
+  curves_tesscontrol = glCreateShader(GL_TESS_CONTROL_SHADER);
+  curves_tesseval = glCreateShader(GL_TESS_EVALUATION_SHADER);
 
   /*GLint length;
   GLchar *source = file_contents("vertex.glsl", &length);
@@ -255,14 +267,20 @@ void initShaders() {
 
   vertex_source = readFileToCharVector("vertex.glsl");
   fragment_source = readFileToCharVector("fragment.glsl");
+  tesscontrol_source = readFileToCharVector("tesscontrol.glsl");
+  tesseval_source = readFileToCharVector("tesseval.glsl");
   vertex_source_pointer = &vertex_source[0];
   fragment_source_pointer = &fragment_source[0];
+  tesscontrol_source_pointer = &tesscontrol_source[0];
+  tesseval_source_pointer = &tesseval_source[0];
 
   /*cout << vertex_source_pointer << "\n";
   cout << fragment_source_pointer << "\n";*/
 
   glShaderSource(curves_vertex, 1, &vertex_source_pointer, NULL);
   glShaderSource(curves_fragment, 1, &fragment_source_pointer, NULL);
+  glShaderSource(curves_tesscontrol, 1, &tesscontrol_source_pointer, NULL);
+  glShaderSource(curves_tesseval, 1, &tesseval_source_pointer, NULL);
 
   glCompileShader(curves_vertex);
   verify_shader(curves_vertex, "vertex");
@@ -270,8 +288,16 @@ void initShaders() {
   glCompileShader(curves_fragment);
   verify_shader(curves_fragment, "fragment");
 
+  glCompileShader(curves_tesscontrol);
+  verify_shader(curves_tesscontrol, "tesscontrol");
+
+  glCompileShader(curves_tesseval);
+  verify_shader(curves_tesseval, "tesseval");
+
   glAttachShader(curves_program, curves_vertex);
   glAttachShader(curves_program, curves_fragment);
+  glAttachShader(curves_program, curves_tesscontrol);
+  glAttachShader(curves_program, curves_tesseval);
   glLinkProgram(curves_program);
 
   GLint prog_link_success;
