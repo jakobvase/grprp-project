@@ -1,8 +1,0 @@
-The pyramid was created first by choosing appropriate vertices (in this case, the top of the pyramid is (0,1,0), and the corners follow (1/-1,0,1/-1).) 
-
-Next came the definition of the faces. Here, I pictured myself standing in front of the pyramid, able to see 3 vertices, the top and two corners. 
-I decided to go counterclockwise to the vertices, and turned the pyramid for each new face to always be standing in front of it. 
-
-Finally, I tipped the pyramid on the side, to be able to stand in front of the base. Here I had to construct 2 triangles, as the base of the pyramid is square. Again I went counterclockwise.
-
-The pyramid compiles and shows for me. I do have a question though, I thought the idea behind back-face culling was to avoid rendering the triangles out of sight (behind the 2 visible faces), but they seem to be rendered nonetheless when I comment out the front triangles? (the front two are counterclockwise, the back 4 are clockwise.)
