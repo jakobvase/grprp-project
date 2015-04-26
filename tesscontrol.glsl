@@ -16,8 +16,8 @@ void main()
     tcPosition[ID] = vVertex[ID];
     tcNormal[ID] = vNormal[ID];
     if (ID == 0) {
-		float TessLevelInner = 4.0;
-		float TessLevelOuter = 4.0;
+		float TessLevelInner = 8.0;
+		float TessLevelOuter = 8.0;
         gl_TessLevelInner[0] = TessLevelInner;
         gl_TessLevelOuter[0] = TessLevelOuter;
         gl_TessLevelOuter[1] = TessLevelOuter;

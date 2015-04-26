@@ -154,7 +154,7 @@ void draw_obj(void)
     n2 = normals.at(triangles.at(i).n2);
     n3 = normals.at(triangles.at(i).n3);
 
-    n = (n1 + n2 + n3) * 0.3333f;
+    //n = (n1 + n2 + n3) * 0.3333f;
 
     // Draw this triangle.
     /**
@@ -164,9 +164,11 @@ void draw_obj(void)
     glVertex3f(v3.x, v3.y, v3.z);
     /**/
     //glNormal3fv(&n[0]);
-    glVertexAttrib3fv(shader_normal, &n[0]);
+    glVertexAttrib3fv(shader_normal, &n1[0]);
     glVertex3fv(&v1[0]);
+    glVertexAttrib3fv(shader_normal, &n2[0]);
     glVertex3fv(&v2[0]);
+    glVertexAttrib3fv(shader_normal, &n3[0]);
     glVertex3fv(&v3[0]);
     /**
     glNormal3f(n1.x, n1.y, n1.z);
