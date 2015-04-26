@@ -41,7 +41,7 @@ point bezier(vec3 p0, vec3 p3, vec3 n1, vec3 n2, float t) {
 	tangent = 3 * nt * nt * (p1 - p0) +
 		6 * nt * t * (p2 - p1) +
 		3 * t * t * (p3 - p2);
-	n = cross(tangent, cross(n1, e1) + cross(n2, e1));
+	n = cross(tangent, nt * cross(n1, e1) + t * cross(n2, e1));
 	//n = n1 + n2;
 	n = normalize(n);
 

@@ -50,11 +50,15 @@ glm::mat4 matrix_mv;
 glm::mat4 matrix_mvp;
 glm::vec3 light_position;
 glm::vec3 light_color;
+
 GLuint shader_mv;
 GLuint shader_mvp;
 GLuint shader_lpos;
 GLuint shader_lcolor;
 GLuint shader_normal;
+
+GLuint tess_inner;
+GLuint tess_outer;
 
 /**/
 vector<char> fragment_source;
@@ -322,6 +326,10 @@ void initShaders() {
   shader_mvp = glGetUniformLocation(curves_program, "MVPMatrix");
   shader_lcolor = glGetUniformLocation(curves_program, "LightColor");
   shader_lpos = glGetUniformLocation(curves_program, "LightPosition");
+
+  tess_inner = glGetUniformLocation(curves_program, "TessLevelInner");
+  tess_outer = glGetUniformLocation(curves_program, "TessLevelOuter");
+
   shader_normal = glGetAttribLocation(curves_program, "Normal");
 
 }
@@ -329,8 +337,8 @@ void initShaders() {
 int main(int argc, char **argv)
 {
   // Check for proper arguments.
-  if (argc < 3) {
-    cout << "usage: " << argv[0] << " <obj_filename> <iterations>" << endl;
+  if (argc < 4) {
+    cout << "usage: " << argv[0] << " <obj_filename> <tess_inner> <tess_outer>" << endl;
     exit(0);
   }
 
@@ -340,7 +348,10 @@ int main(int argc, char **argv)
   cout << "t" << triangles.size() << "v" << vertices.size() << "n" << normals.size() << "\n";
 
   // Curve it!
-  curve_object(stoi(argv[2]));
+  //curve_object(stoi(argv[2]));
+
+  float t_inner = stoi(argv[2]);
+  float t_outer = stoi(argv[3]);
   
   // Set up glut.
   glutInit(&argc, argv);
@@ -355,6 +366,10 @@ int main(int argc, char **argv)
     exit(1); // or handle the error in a nicer way
 
   initShaders();
+
+  glUniform1f(tess_inner, t_inner);
+  glUniform1f(tess_outer, t_outer);
+
   /**/
 
   glutDisplayFunc(display);
