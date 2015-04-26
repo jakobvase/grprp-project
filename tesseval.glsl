@@ -76,5 +76,5 @@ void main()
     vec3 to_light = LightPosition - (MVMatrix*Vertex).xyz;
     vec3 n_to_light = normalize(to_light);
     float intense = clamp(dot(normal, n_to_light.xyz), 0.0, 1.0);
-    light = intense * LightColor;
+    light = intense * 0.95 * LightColor + 0.05;
 }
