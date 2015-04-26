@@ -1,0 +1,39 @@
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{verbatim}
+
+%%Comments
+%Use \myquote{word} for correct quotation marks on word.
+
+%%Packages
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{pdfpages}
+\usepackage{supertabular}
+\usepackage{float}
+\usepackage{todonotes}
+\usepackage{mathtools}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{textcomp}
+\usepackage{amsmath} 	%math stuff
+\usepackage{array} 		% for advanced column specification: use >{\command} for
+                        % commands executed right before each column element
+                        % and <{\command} for commands to be executed right after
+                        % each column element
+\usepackage[nottoc,numbib]{tocbibind} %Make bibliography appear in table of contents.
+
+%%Commands
+%Pretty tables
+\renewcommand{\arraystretch}{1.5}
+%Easy correct quotation
+\newcommand{\myquote}[1]{``{#1}''}
+
+\usepackage{titlesec, blindtext, color}
+\definecolor{gray75}{gray}{0.75}
+\newcommand{\hsp}{\hspace{20pt}}
+
+%\titleclass{\chapter}{straight}
+\titlespacing*{\chapter}{0pt}{20pt}{15pt}
+\titleformat{\chapter}[hang]{\huge\bfseries}{\thechapter\hsp\textcolor{gray75}{|}\hsp}{0pt}{\huge\bfseries}
