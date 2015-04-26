@@ -5,8 +5,9 @@ in vec3 vVertex[];
 in vec3 vNormal[];
 out vec3 tcPosition[];
 out vec3 tcNormal[];
-//uniform float TessLevelInner;
-//uniform float TessLevelOuter;
+
+uniform float TessLevelInner;
+uniform float TessLevelOuter;
 
 #define ID gl_InvocationID
 
@@ -16,8 +17,6 @@ void main()
     tcPosition[ID] = vVertex[ID];
     tcNormal[ID] = vNormal[ID];
     if (ID == 0) {
-		float TessLevelInner = 4.0;
-		float TessLevelOuter = 4.0;
         gl_TessLevelInner[0] = TessLevelInner;
         gl_TessLevelOuter[0] = TessLevelOuter;
         gl_TessLevelOuter[1] = TessLevelOuter;
