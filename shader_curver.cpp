@@ -1,29 +1,16 @@
 #include <vector>
 #include <iostream>
-#include <cstdlib>
-#include <fstream>
-#include <limits>
-#include <string>
-#include <cmath>
-#include <time.h>
-#include <cstdio>
-#include <stdlib.h>
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/random.hpp"
 
 #ifdef __linux__
 #include <GL/glew.h>
 #include <GL/glut.h>
-#include <GL/gl.h>
-#include <GL/glu.h>
-#include <GL/glext.h>
 #else
 #include <GL/glew.h>
 #include <GLUT/glut.h>
-#include <OpenGL/gl.h>
-#include <OpenGL/glu.h>
-#include <OpenGL/glext.h>
 #endif
 
 #include "vertex.cpp"
@@ -59,6 +46,14 @@ GLuint shader_normal;
 
 GLuint tess_inner;
 GLuint tess_outer;
+GLuint tangent_length;
+int t_inner;
+int t_outer;
+float tan_length;
+bool rotate;
+float angle;
+glm::vec3 position;
+glm::vec3 direction;
 
 /**/
 vector<char> fragment_source;
@@ -132,13 +127,23 @@ void draw_obj(void)
   glm::vec3 v1, v2, v3, n1, n2, n3;
   glm::vec3 n;
 
-  glm::mat4 rotated = glm::rotate(matrix_mv, (clock() - t) / 1e6f, glm::vec3(0.0f, 1.0f, 0.0f));
-  glm::mat4 projection = matrix_mvp * rotated;
+  if (rotate) {
+    angle += (clock() - t) / 1e6f;
+  }
+  t = clock(); 
 
+  glm::mat4 rotated = glm::rotate(matrix_mv, angle, glm::vec3(0.0f, 1.0f, 0.0f));
+  rotated = glm::rotate(rotated, angle / 10, glm::vec3(1.0f, 0.0f, 0.0f));
+  glm::mat4 projection = matrix_mvp * rotated;
   glUniformMatrix4fv(shader_mv, 1, GL_FALSE, &rotated[0][0]);
   glUniformMatrix4fv(shader_mvp, 1, GL_FALSE, &projection[0][0]);
+  
   glUniform3f(shader_lpos, light_position.x, light_position.y, light_position.z);
   glUniform3f(shader_lcolor, light_color.x, light_color.y, light_color.z);
+
+  glUniform1f(tess_inner, t_inner);
+  glUniform1f(tess_outer, t_outer);
+  glUniform1f(tangent_length, tan_length);
 
   glPatchParameteri(GL_PATCH_VERTICES, 3);
 
@@ -203,8 +208,9 @@ void init_scene(void)
   glEnable(GL_DEPTH_TEST);
 
   matrix_mvp = glm::perspective(0.7f, 1.0f, 1.0f, 10.0f);
-  matrix_mv = glm::lookAt(glm::vec3(0.0f, 2.0f, 5.0f),
-    glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+  matrix_mv = glm::lookAt(position,
+    position + direction,
+    glm::vec3(0.0f, 1.0f, 0.0f));
 }
 
 static void show_info_log(GLuint object,
@@ -302,9 +308,79 @@ void initShaders() {
 
   tess_inner = glGetUniformLocation(curves_program, "TessLevelInner");
   tess_outer = glGetUniformLocation(curves_program, "TessLevelOuter");
+  tangent_length = glGetUniformLocation(curves_program, "TangentLength");
 
   shader_normal = glGetAttribLocation(curves_program, "Normal");
 
+}
+
+void keyboard_input(unsigned char key, int x, int y) {
+  switch (key) {
+    case 'i':
+      t_inner++;
+      break;
+    case 'k':
+      if (t_inner > 1) t_inner--;
+      break;
+    case 'o':
+      t_outer++;
+      break;
+    case 'l':
+      if (t_outer > 1) t_outer--;
+      break;
+    case 't':
+      tan_length += 0.1f;
+      break;
+    case 'g':
+      tan_length -= 0.1f;
+      break;
+    case 'n':
+      normals[0] = glm::sphericalRand(1.0f);
+      break;
+    case 'r':
+      rotate = !rotate;
+      break;
+    case 'w':
+      position.y += 0.1f;
+      break;
+    case 's':
+      position.y -= 0.1f;
+      break;
+    case 'd':
+      position.x += 0.1f;
+      break;
+    case 'a':
+      position.x -= 0.1f;
+      break;
+  }
+
+
+  matrix_mv = glm::lookAt(position,
+    position + direction,
+    glm::vec3(0.0f, 1.0f, 0.0f));
+
+  cout << "t_inner " << t_inner << " t_outer " << t_outer << " tangent " << tan_length << "\n";
+}
+
+int lastX, lastY;
+bool firstMouse = true;
+void mouse(int x, int y) {
+
+  if (firstMouse) {
+    firstMouse = false;
+    lastX = x;
+    lastY = y;
+  }
+
+  direction.x -= (x - lastX) / 100.0f;
+  direction.y += (y - lastY) / 100.0f;
+
+  lastX = x;
+  lastY = y;
+
+  matrix_mv = glm::lookAt(position,
+    position + direction,
+    glm::vec3(0.0f, 1.0f, 0.0f));
 }
 
 int main(int argc, char **argv)
@@ -323,8 +399,13 @@ int main(int argc, char **argv)
   // Curve it!
   //curve_object(stoi(argv[2]));
 
-  float t_inner = stoi(argv[2]);
-  float t_outer = stoi(argv[3]);
+  t_inner = stoi(argv[2]);
+  t_outer = stoi(argv[3]);
+  tan_length = 0.35f;
+  rotate = true;
+
+  position = glm::vec3(0.0f, 2.0f, 5.0f);
+  direction = glm::vec3(0.0f, -2.0f, -5.0f);
   
   // Set up glut.
   glutInit(&argc, argv);
@@ -342,9 +423,6 @@ int main(int argc, char **argv)
 
   initShaders();
 
-  glUniform1f(tess_inner, t_inner);
-  glUniform1f(tess_outer, t_outer);
-
   /**/
 
   glutDisplayFunc(display);
@@ -354,6 +432,8 @@ int main(int argc, char **argv)
 
   t = clock();
 
+  glutKeyboardFunc(keyboard_input);
+  glutMotionFunc(mouse);
   // Hand control over to glut's main loop.
   glutMainLoop();
 }
