@@ -9,8 +9,8 @@
 #include <cstdio>
 #include <stdlib.h>
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
 
 #ifdef __linux__
 #include <GL/glew.h>
@@ -132,10 +132,7 @@ void draw_obj(void)
   glm::vec3 v1, v2, v3, n1, n2, n3;
   glm::vec3 n;
 
-
-  glPushMatrix();
-  glRotatef((clock() - t) / 5e4, 0.0, 1.0, 0.0);
-  glm::mat4 rotated = glm::rotate(matrix_mv, (clock() - t) / 5e4f, glm::vec3(0.0f, 1.0f, 0.0f));
+  glm::mat4 rotated = glm::rotate(matrix_mv, (clock() - t) / 1e6f, glm::vec3(0.0f, 1.0f, 0.0f));
   glm::mat4 projection = matrix_mvp * rotated;
 
   glUniformMatrix4fv(shader_mv, 1, GL_FALSE, &rotated[0][0]);
@@ -185,7 +182,6 @@ void draw_obj(void)
   }
 
   glEnd();
-  glPopMatrix();
 }
 
 void display(void)
@@ -198,40 +194,17 @@ void display(void)
 
 void init_scene(void)
 {
-  //glUseProgram(0);
-
   /**/
   light_position = glm::vec3(1.0f, 4.0f, 2.0f);
   light_color = glm::vec3(1.0f, 0.0f, 0.0f);
-
-  // Configure a light.
-  GLfloat light_diffuse[] = {1.0, 0.0, 0.0, 1.0};  // Red diffuse light.
-  GLfloat light_position[] = {1.0, 4.0, 2.0, 0.0};  // Infinite light location.
-  glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
-  glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-  glEnable(GL_LIGHT0);
-  glEnable(GL_LIGHTING);
   /**/
 
   // Use depth buffering for hidden surface elimination.
   glEnable(GL_DEPTH_TEST);
 
-  matrix_mvp = glm::perspective(40.0f, 1.0f, 1.0f, 10.0f);
+  matrix_mvp = glm::perspective(0.7f, 1.0f, 1.0f, 10.0f);
   matrix_mv = glm::lookAt(glm::vec3(0.0f, 2.0f, 5.0f),
     glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-
-  // Configure viewing.  (Assumes object is within [-1,1] in all axes.)
-  glMatrixMode(GL_PROJECTION);
-  gluPerspective(40.0, 1.0, 1.0, 10.0);
-  glMatrixMode(GL_MODELVIEW);
-  gluLookAt(0.0, 2.0, 5.0,  // Set eye position, target position, and up direction.
-    0.0, 0.0, 0.0,
-    0.0, 1.0, 0.0);
-
-  // Rotate object.
-  glRotatef(30, 0.0, 1.0, 0.0);
-
-
 }
 
 static void show_info_log(GLuint object,
@@ -356,7 +329,9 @@ int main(int argc, char **argv)
   // Set up glut.
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+  //glutInitWindowSize(500, 500);
   glutCreateWindow("Shader Curver");
+
 
   /**/
   GLenum err = glewInit();
