@@ -54,6 +54,51 @@ point bezier(vec3 p0, vec3 p3, vec3 n1, vec3 n2, float t) {
 	return p;
 }
 
+point bezierTriangle(vec3 a, vec3 b, vec3 c, vec3 na, vec3 nb, vec3 nc, float s, float t, float u) {
+	vec3 eab, ebc, eca;
+	vec3 ab, ba, bc, cb, ca, ac, abc;
+
+	eab = b - a;
+	ebc = c - b;
+	eca = a - c;
+
+	ab = cross(cross(na, eab), na);
+	ba = cross(cross(nb, -eab), nb);
+	bc = cross(cross(nb, ebc), nb);
+	cb = cross(cross(nc, -ebc), nc);
+	ca = cross(cross(nc, eca), nc);
+	ac = cross(cross(na, -eca), na);
+
+	float lab = length(eab) * TangentLength;
+	float lbc = length(ebc) * TangentLength;
+	float lca = length(eca) * TangentLength;
+
+	ab = a + normalize(ab) * lab;
+	ba = b + normalize(ba) * lab;
+	bc = b + normalize(bc) * lbc;
+	cb = c + normalize(cb) * lbc;
+	ca = c + normalize(ca) * lca;
+	ac = a + normalize(ac) * lca;
+
+	abc = (ab + ba + bc + cb + ca + ac) / 6;
+
+	vec3 v = b * t * t * t +
+		3 * ba * s * t * t +
+		3 * bc * t * t * u + //
+		3 * ab * s * s * t +
+		6 * abc * s * t * u +
+		3 * cb * t * u * u + //
+		a * s * s * s +
+		3 * ac * s * s * u +
+		3 * ca * s * u * u +
+		c * u * u * u;
+
+	point p;
+	p.p = v;
+	p.n = na * s + nb * t + nc * u;
+	return p;
+}
+
 void main()
 {
 	/**
@@ -62,16 +107,26 @@ void main()
     vec3 p2 = gl_TessCoord.z * tcPosition[2];
     /**/
 
+	point middle;
+
+	/* using basic bezier *
     float t1 = 0.5;
     if (gl_TessCoord.z < 1.0)
 		t1 = gl_TessCoord.y / (gl_TessCoord.x + gl_TessCoord.y);
+
     point edge = bezier(tcPosition[0], tcPosition[1], tcNormal[0], tcNormal[1], t1);
 
     float t2 = gl_TessCoord.z;
-    point middle = bezier(edge.p, tcPosition[2], edge.n, tcNormal[2], t2);
-    point mn = bezier(edge.p, tcPosition[2], edge.n, tcNormal[2], 1);
+    middle = bezier(edge.p, tcPosition[2], edge.n, tcNormal[2], t2);
 
-    light = gl_TessCoord;
+    /* using bezier triangle */
+    middle = bezierTriangle(tcPosition[0], tcPosition[1], tcPosition[2],
+    				tcNormal[0], tcNormal[1], tcNormal[2],
+    				gl_TessCoord.x, gl_TessCoord.y, gl_TessCoord.z);
+
+    /**/
+
+    light = vec3(middle.n);
 
     //vec4 Vertex = vec4((p0 + p1 + p2), 1);
     Vertex = vec4(middle.p, 1);
