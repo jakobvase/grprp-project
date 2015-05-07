@@ -1,11 +1,6 @@
 #include <vector>
 #include <iostream>
-#include <cstdlib>
 #include <fstream>
-#include <limits>
-#include <string>
-#include <cmath>
-#include <ctime>
 
 #include "glm/glm.hpp"
 
