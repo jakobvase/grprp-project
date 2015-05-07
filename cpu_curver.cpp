@@ -99,7 +99,7 @@ void draw_obj(void)
     n2 = normals.at(triangles.at(i).n2);
     n3 = normals.at(triangles.at(i).n3);
 
-    /* For face lighting (per face lighting) */
+    /* For face lighting (per face lighting) *
     n = (n1 + n2 + n3) * 0.3333f;
     glNormal3fv(&n[0]);
     glVertex3fv(&v1[0]);
@@ -107,7 +107,7 @@ void draw_obj(void)
     glVertex3fv(&v3[0]);
     /**/
 
-    /* For smooth lightning (per vertex lighting) *
+    /* For smooth lightning (per vertex lighting) */
     glNormal3f(n1.x, n1.y, n1.z);
     glVertex3f(v1.x, v1.y, v1.z);
     glNormal3f(n2.x, n2.y, n2.z);

@@ -1,4 +1,3 @@
-#include <cmath>
 #include "glm/glm.hpp"
 
 namespace vertex_math{
