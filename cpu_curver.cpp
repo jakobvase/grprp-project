@@ -2,25 +2,26 @@
 #include <iostream>
 #include <fstream>
 
-#include "glm/glm.hpp"
-
 #ifdef __linux__
 #include <GL/glut.h>
 #else
 #include <GLUT/glut.h>
 #endif
 
-#include "vertex.cpp"
-#include "file_functions.cpp"
+#include "glm/glm.hpp" //External library for opengl math functions
+
+#include "vertex.cpp" //home-written class for math on vertices
+#include "file_functions.cpp" //home-written class for loading object files
 
 using namespace std;
 using namespace vertex_math;
 
 #define LINE_SIZE (256)
 
-vector<glm::vec3> vertices;
-vector<triangle> triangles;
-vector<glm::vec3> normals;
+vector<glm::vec3> vertices; // A list of our vertices
+vector<triangle> triangles; // A list of our triangles, 
+//triangle is defined in vertex.cpp
+vector<glm::vec3> normals; // A list of the normals of our 
 
 int t;
 
