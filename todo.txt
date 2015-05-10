@@ -1,3 +1,0 @@
-More complicated .obj file
-
-Change direction of original vertex normal
