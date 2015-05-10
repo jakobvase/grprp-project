@@ -109,7 +109,7 @@ void main()
 
 	point middle;
 
-	/* using basic bezier *
+	/* using basic bezier */
     float t1 = 0.5;
     if (gl_TessCoord.z < 1.0)
 		t1 = gl_TessCoord.y / (gl_TessCoord.x + gl_TessCoord.y);
@@ -119,7 +119,7 @@ void main()
     float t2 = gl_TessCoord.z;
     middle = bezier(edge.p, tcPosition[2], edge.n, tcNormal[2], t2);
 
-    /* using bezier triangle */
+    /* using bezier triangle *
     middle = bezierTriangle(tcPosition[0], tcPosition[1], tcPosition[2],
     				tcNormal[0], tcNormal[1], tcNormal[2],
     				gl_TessCoord.x, gl_TessCoord.y, gl_TessCoord.z);
