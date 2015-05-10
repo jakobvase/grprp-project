@@ -21,26 +21,44 @@ using namespace vertex_math;
 vector<glm::vec3> vertices; // A list of our vertices
 vector<triangle> triangles; // A list of our triangles, 
 //triangle is defined in vertex.cpp
-vector<glm::vec3> normals; // A list of the normals of our 
+vector<glm::vec3> normals; // A list of normals corresponding to vertices
 
-int t;
+int t; // t is the time the program launched.
 
+// Curve an object
+// parameter count -> the number of times to run through the curving.
+// Every run multiplies the number of triangles in the object by 4.
+// Effectively, the new triangle count will be:
+// original_triangle_count * 4 ^ count.
 void curve_object(int count) {
-  if(count <= 0) return;
+  if(count <= 0) return; // Base case for recursion.
+
+  //v = vertex, n = normal, b = new curved vertex, bn = new curved vertex normal.
   glm::vec3 v1, v2, v3, n1, n2, n3, b1, b2, b3, bn1, bn2, bn3;
+
+  //i = index of new vertex, in = index of new normal, 
+  //o = original vertex index, on = original vertex normal index
   int i1, i2, i3, in1, in2, in3, o1, o2, o3, on1, on2, on3;
+
+  //the four new triangles.
   triangle t1, t2, t3, t4;
+
+  //the triangle vector to replace the old triangle vector.
   vector<triangle> new_triangles;
 
+  // Main loop, runs through all the triangles in the object and splits them,
+  // sacing the new triangles in new_triangles.
   for (int i = 0; i < triangles.size(); ++i) {
     // Read vertices out of triangles vector.
     o1 = triangles.at(i).i1;
     o2 = triangles.at(i).i2;
     o3 = triangles.at(i).i3;
+    // Read normals out of triangles vector
     on1 = triangles.at(i).n1;
     on2 = triangles.at(i).n2;
     on3 = triangles.at(i).n3;
 
+    // Find the vertices and normals
     v1 = vertices.at(o1);
     v2 = vertices.at(o2);
     v3 = vertices.at(o3);
@@ -48,10 +66,12 @@ void curve_object(int count) {
     n2 = normals.at(on2);
     n3 = normals.at(on3);
 
+    // Curve the points! bezier() is defined in vertex.cpp
     bezier(v1, v2, n1, n2, b1, bn1);
     bezier(v2, v3, n2, n3, b2, bn2);
     bezier(v3, v1, n3, n1, b3, bn3);
 
+    // compute the indexes for the new vertices and normals.
     i1 = vertices.size();
     i2 = i1 + 1;
     i3 = i2 + 1;
@@ -59,6 +79,8 @@ void curve_object(int count) {
     in2 = in1 + 1;
     in3 = in2 + 1;
 
+    // Push the new points into the vertex and normal lists.
+    // This is very unsafe in multithreaded environments.
     vertices.push_back(b1);
     vertices.push_back(b2);
     vertices.push_back(b3);
@@ -66,33 +88,40 @@ void curve_object(int count) {
     normals.push_back(bn2);
     normals.push_back(bn3);
 
+    // Create the new triangles. createTriangle() is defined in vertex.cpp
     t1 = createTriangle(o1, i1, i3, on1, in1, in3);
     t2 = createTriangle(o2, i2, i1, on2, in2, in1);
     t3 = createTriangle(o3, i3, i2, on3, in3, in2);
     t4 = createTriangle(i1, i2, i3, in1, in2, in3);
 
+    //Push back the new triangles and end the loop.
     new_triangles.push_back(t1);
     new_triangles.push_back(t2);
     new_triangles.push_back(t3);
     new_triangles.push_back(t4);
   }
 
+  // This is the recursive step!
+  // Set the old triangles to the new ones, and call curve again with
+  // the count reduced.
   triangles = new_triangles;
   curve_object(--count);
 }
 
+// Draw the object on the screen.
 void draw_obj(void)
 {
-  glm::vec3 v1, v2, v3, n1, n2, n3;
-  glm::vec3 e1, e2;
-  glm::vec3 n;
+  glm::vec3 v1, v2, v3, n1, n2, n3; // vectors and normals
+  glm::vec3 n; // The normal of a face
 
-  glPushMatrix();
-  glRotatef((clock() - t) / 5e4, 0.0, 1.0, 0.0);
-  glBegin(GL_TRIANGLES);
+  glPushMatrix(); //Push, so that matrix calculations won't 
+  //need to be redone if the camera moves.
+  glRotatef((clock() - t) / 5e4, 0.0, 1.0, 0.0); // Rotate slowly around the y axis,
+  // based on the time since the program launched
+  glBegin(GL_TRIANGLES); // Begin drawing triangles!
 
   for (int i = 0; i < triangles.size(); ++i) {
-    // Read vertices out of triangles vector.
+    // Read vertices and normals out of triangles vector.
     v1 = vertices.at(triangles.at(i).i1);
     v2 = vertices.at(triangles.at(i).i2);
     v3 = vertices.at(triangles.at(i).i3);
@@ -101,7 +130,7 @@ void draw_obj(void)
     n3 = normals.at(triangles.at(i).n3);
 
     /* For face lighting (per face lighting) *
-    n = (n1 + n2 + n3) * 0.3333f;
+    n = (n1 + n2 + n3) * 0.3333f; // compute face normal
     glNormal3fv(&n[0]);
     glVertex3fv(&v1[0]);
     glVertex3fv(&v2[0]);
@@ -117,18 +146,21 @@ void draw_obj(void)
     glVertex3f(v3.x, v3.y, v3.z);
     /**/
   }
-  glEnd();
-  glPopMatrix();
+  glEnd(); // stop drawing!
+  glPopMatrix(); // Remember to pop the matrix again.
 }
 
+// A function for displaying objects. Resets buffers, draws an object and
+// displays it.
 void display(void)
 {
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  draw_obj();
-  glutSwapBuffers();
-  glutPostRedisplay();
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // TODO what is this?
+  draw_obj(); // Draw the object!
+  glutSwapBuffers(); // TODO ???
+  glutPostRedisplay(); // TODO ???
 }
 
+// Set the scene for the object.
 void init_scene(void)
 {
   // Configure a light.
@@ -154,6 +186,7 @@ void init_scene(void)
   glRotatef(30, 0.0, 1.0, 0.0);
 }
 
+// Main
 int main(int argc, char **argv)
 {
   // Check for proper arguments.
@@ -162,7 +195,7 @@ int main(int argc, char **argv)
     exit(0);
   }
 
-  // Read obj file given as argument.
+  // Read obj file given as argument. read_obj_file() is defined in file_functions.cpp.
   read_obj_file(argv[1], vertices, normals, triangles);
 
   // Curve it!
@@ -177,6 +210,7 @@ int main(int argc, char **argv)
   // Initialize scene.
   init_scene();
 
+  // Save the time the program was started.
   t = clock();
 
   // Hand control over to glut's main loop.
