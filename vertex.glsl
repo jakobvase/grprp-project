@@ -1,11 +1,15 @@
 #version 410
 
+// input from glBegin
 in vec4 Vertex;
 in vec3 Normal;
 
+// output to tesselation control
 out vec3 vVertex;
 out vec3 vNormal;
-/**
+
+/** Since we are using tesselation, the tesselation evaluation, is now
+	used as the new vertex shader.
 uniform mat4 MVMatrix;
 uniform mat4 MVPMatrix;
 uniform vec3 LightPosition;
@@ -23,6 +27,9 @@ void main()
     light = vec3(intense * LightColor * 0.9 + 0.1);
 }
 /**/
+
+// as the tesselation still haven't created all vertices yet,
+//	calculating light at this step is useless.
 void main()
 {
 	vVertex = Vertex.xyz;

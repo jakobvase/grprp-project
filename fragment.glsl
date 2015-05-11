@@ -12,7 +12,7 @@ in vec3 light;
 
 void main()
 {
-
+    // calculating diffuse light
     vec3 to_light = LightPosition - (MVMatrix*Vertex).xyz;
     vec3 n_to_light = normalize(to_light);
     float intense = clamp(dot(Normal, n_to_light.xyz), 0.0, 1.0);

@@ -154,10 +154,10 @@ void draw_obj(void)
 // displays it.
 void display(void)
 {
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // TODO what is this?
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear the screen (both color and z-buffer)
   draw_obj(); // Draw the object!
-  glutSwapBuffers(); // TODO ???
-  glutPostRedisplay(); // TODO ???
+  glutSwapBuffers(); // Show current frame, and edit last buffer
+  glutPostRedisplay(); // Tell GLUT that we want to repaint the screen immediately
 }
 
 // Set the scene for the object.

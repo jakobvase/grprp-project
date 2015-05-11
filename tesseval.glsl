@@ -54,6 +54,7 @@ point bezier(vec3 p0, vec3 p3, vec3 n1, vec3 n2, float t) {
 	return p;
 }
 
+/** We did not use Bézier triangles
 point bezierTriangle(vec3 a, vec3 b, vec3 c, vec3 na, vec3 nb, vec3 nc, float s, float t, float u) {
 	vec3 eab, ebc, eca;
 	vec3 ab, ba, bc, cb, ca, ac, abc;
@@ -98,25 +99,30 @@ point bezierTriangle(vec3 a, vec3 b, vec3 c, vec3 na, vec3 nb, vec3 nc, float s,
 	p.n = na * s + nb * t + nc * u;
 	return p;
 }
+*/
 
 void main()
 {
-	/**
+	/** the new vertex (p) can be found like this.
     vec3 p0 = gl_TessCoord.x * tcPosition[0];
     vec3 p1 = gl_TessCoord.y * tcPosition[1];
     vec3 p2 = gl_TessCoord.z * tcPosition[2];
+    vec3 p = p0 + p1 + p2;
     /**/
 
 	point middle;
 
 	/* using basic bezier */
     float t1 = 0.5;
+    // if gl_TessCoord.z is 1.0, finding t1 will cause division by zero
     if (gl_TessCoord.z < 1.0)
 		t1 = gl_TessCoord.y / (gl_TessCoord.x + gl_TessCoord.y);
 
+	// finding the point and normal of the v0 - v1 edge
     point edge = bezier(tcPosition[0], tcPosition[1], tcNormal[0], tcNormal[1], t1);
 
     float t2 = gl_TessCoord.z;
+    // finding the final point and normal on the curve between first edge and v2
     middle = bezier(edge.p, tcPosition[2], edge.n, tcNormal[2], t2);
 
     /* using bezier triangle *
@@ -126,8 +132,11 @@ void main()
 
     /**/
 
+	/** this was used when we did vertex lighting
     light = vec3(middle.n);
+	/**/
 
+    // multiplying the Vertex with projection matrix, to position it on screen
     //vec4 Vertex = vec4((p0 + p1 + p2), 1);
     Vertex = vec4(middle.p, 1);
     gl_Position = MVPMatrix * Vertex;

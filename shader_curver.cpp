@@ -132,24 +132,27 @@ void draw_obj(void)
   }
   t = clock(); 
 
+  // rotate modelview (similar to glRotate)
   glm::mat4 rotated = glm::rotate(matrix_mv, angle, glm::vec3(0.0f, 1.0f, 0.0f));
   rotated = glm::rotate(rotated, angle / 10, glm::vec3(1.0f, 0.0f, 0.0f));
+  // calculate projection matrix
   glm::mat4 projection = matrix_mvp * rotated;
+  // pass matrices to the shaders
   glUniformMatrix4fv(shader_mv, 1, GL_FALSE, &rotated[0][0]);
   glUniformMatrix4fv(shader_mvp, 1, GL_FALSE, &projection[0][0]);
   
+  // pass light to the shaders
   glUniform3f(shader_lpos, light_position.x, light_position.y, light_position.z);
   glUniform3f(shader_lcolor, light_color.x, light_color.y, light_color.z);
 
+  // pass tesselation info to the shaders
   glUniform1f(tess_inner, t_inner);
   glUniform1f(tess_outer, t_outer);
   glUniform1f(tangent_length, tan_length);
 
+  // using triangle patches (triangles with tesselation)
   glPatchParameteri(GL_PATCH_VERTICES, 3);
-
   glBegin(GL_PATCHES);
-
-  //cout << "drawing " << triangles.size() << " tris\n";
 
   for (int i = 0; i < triangles.size(); ++i) {
     // Read vertices out of triangles vector.
@@ -160,30 +163,14 @@ void draw_obj(void)
     n2 = normals.at(triangles.at(i).n2);
     n3 = normals.at(triangles.at(i).n3);
 
-    //n = (n1 + n2 + n3) * 0.3333f;
-
-    // Draw this triangle.
-    /**
-    glNormal3f(n.x, n.y, n.z);
-    glVertex3f(v1.x, v1.y, v1.z);
-    glVertex3f(v2.x, v2.y, v2.z);
-    glVertex3f(v3.x, v3.y, v3.z);
-    /**/
-    //glNormal3fv(&n[0]);
+    // normals are not a fixed part of the GLSL 1.4+ pipeline
+    // we pass them as atrributes, and use them as normals in our shaders
     glVertexAttrib3fv(shader_normal, &n1[0]);
     glVertex3fv(&v1[0]);
     glVertexAttrib3fv(shader_normal, &n2[0]);
     glVertex3fv(&v2[0]);
     glVertexAttrib3fv(shader_normal, &n3[0]);
     glVertex3fv(&v3[0]);
-    /**
-    glNormal3f(n1.x, n1.y, n1.z);
-    glVertex3f(v1.x, v1.y, v1.z);
-    glNormal3f(n2.x, n2.y, n2.z);
-    glVertex3f(v2.x, v2.y, v2.z);
-    glNormal3f(n3.x, n3.y, n3.z);
-    glVertex3f(v3.x, v3.y, v3.z);
-    /**/
   }
 
   glEnd();
@@ -191,6 +178,7 @@ void draw_obj(void)
 
 void display(void)
 {
+  // clear, draw, flip and tell glut to repaint again
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   draw_obj();
   glutSwapBuffers();
@@ -199,7 +187,8 @@ void display(void)
 
 void init_scene(void)
 {
-  /**/
+  /* Light is just vectors now, we manually pass them to the shaders
+      and calculate the values as diffuse light */
   light_position = glm::vec3(1.0f, 4.0f, 2.0f);
   light_color = glm::vec3(1.0f, 0.0f, 0.0f);
   /**/
@@ -207,12 +196,16 @@ void init_scene(void)
   // Use depth buffering for hidden surface elimination.
   glEnable(GL_DEPTH_TEST);
 
+  // setup the projection and model view matrices, using GLM's glut helper functions
   matrix_mvp = glm::perspective(0.7f, 1.0f, 1.0f, 10.0f);
   matrix_mv = glm::lookAt(position,
     position + direction,
     glm::vec3(0.0f, 1.0f, 0.0f));
 }
 
+// Code to verify GLSL version and shaders:
+// show_info_log and verify_shaders are based on code copied from
+// http://voxels.blogspot.dk/2011/09/tesselation-shader-tutorial-with-source.html
 static void show_info_log(GLuint object,
   PFNGLGETSHADERIVPROC glGet__iv,
   PFNGLGETSHADERINFOLOGPROC glGet__InfoLog) {
@@ -236,6 +229,7 @@ static void verify_shader(GLuint shader, char *name) {
   }
 }
 
+// load, compile and attach shaders
 void initShaders() {
 
   /**/
@@ -246,10 +240,7 @@ void initShaders() {
   curves_tesscontrol = glCreateShader(GL_TESS_CONTROL_SHADER);
   curves_tesseval = glCreateShader(GL_TESS_EVALUATION_SHADER);
 
-  /*GLint length;
-  GLchar *source = file_contents("vertex.glsl", &length);
-  cout << source << "\n";*/
-
+  // Load all shaders from files
   vertex_source = readFileToCharVector("vertex.glsl");
   fragment_source = readFileToCharVector("fragment.glsl");
   tesscontrol_source = readFileToCharVector("tesscontrol.glsl");
@@ -262,6 +253,7 @@ void initShaders() {
   /*cout << vertex_source_pointer << "\n";
   cout << fragment_source_pointer << "\n";*/
 
+  // Add, compile and verify all shaders
   glShaderSource(curves_vertex, 1, &vertex_source_pointer, NULL);
   glShaderSource(curves_fragment, 1, &fragment_source_pointer, NULL);
   glShaderSource(curves_tesscontrol, 1, &tesscontrol_source_pointer, NULL);
@@ -279,6 +271,7 @@ void initShaders() {
   glCompileShader(curves_tesseval);
   verify_shader(curves_tesseval, "tesseval");
 
+  // Attach all shaders to the program
   glAttachShader(curves_program, curves_vertex);
   glAttachShader(curves_program, curves_fragment);
   glAttachShader(curves_program, curves_tesscontrol);
@@ -297,10 +290,11 @@ void initShaders() {
   printf("Max supported patch vertices %d\n", MaxPatchVertices);  
   glPatchParameteri(GL_PATCH_VERTICES, 3);
 
-  /**/
+  // Activate the program as the active rendering pipeline
 
   glUseProgram(curves_program);
 
+  // Get uniform locations of all elements we need to set from this program
   shader_mv = glGetUniformLocation(curves_program, "MVMatrix");
   shader_mvp = glGetUniformLocation(curves_program, "MVPMatrix");
   shader_lcolor = glGetUniformLocation(curves_program, "LightColor");
@@ -314,32 +308,39 @@ void initShaders() {
 
 }
 
+// Listen for keyboard input
 void keyboard_input(unsigned char key, int x, int y) {
   switch (key) {
+    // i-k adjust inner tessellation
     case 'i':
       t_inner++;
       break;
     case 'k':
       if (t_inner > 1) t_inner--;
       break;
+    // o-l adjust outer tessellation
     case 'o':
       t_outer++;
       break;
     case 'l':
       if (t_outer > 1) t_outer--;
       break;
+    // t-g adjust tangent length
     case 't':
       tan_length += 0.1f;
       break;
     case 'g':
       tan_length -= 0.1f;
       break;
+    // n set normal of first vertex to a random value
     case 'n':
       normals[0] = glm::sphericalRand(1.0f);
       break;
+    // r pause rotation
     case 'r':
       rotate = !rotate;
       break;
+    // wasd move camera
     case 'w':
       position.y += 0.1f;
       break;
@@ -414,7 +415,7 @@ int main(int argc, char **argv)
   glutCreateWindow("Shader Curver");
 
 
-  /**/
+  /* Initialize glew, to access shaders */
   GLenum err = glewInit();
   if (err != GLEW_OK)
     exit(1); // or handle the error in a nicer way
@@ -430,8 +431,10 @@ int main(int argc, char **argv)
   // Initialize scene.
   init_scene();
 
+  // we use the clock to rotate the object
   t = clock();
 
+  // Let glut handle keyboard and mouse input
   glutKeyboardFunc(keyboard_input);
   glutMotionFunc(mouse);
   // Hand control over to glut's main loop.
