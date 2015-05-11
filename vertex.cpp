@@ -31,9 +31,8 @@ namespace vertex_math{
     t2 = glm::cross(glm::cross(n2, e2), n2);
 
     // Set the tangents to be 1/3 of the length between the points.
-    // TODO why 1/3?
-    t1 = glm::normalize(t1);
-    t2 = glm::normalize(t2);// TODO Aren't these redundant?
+    // This value can be varied, but using 1/3 to make sure that all four
+    // control points are evenly distributed on the edge.
     float l = glm::length(e1);
     t1 = glm::normalize(t1) * (l / 3);
     t2 = glm::normalize(t2) * (l / 3);
