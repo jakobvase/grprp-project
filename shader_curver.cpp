@@ -21,41 +21,41 @@ using namespace vertex_math;
 
 #define LINE_SIZE (256)
 
-vector<glm::vec3> vertices;
-vector<triangle> triangles;
-vector<glm::vec3> normals;
+vector<glm::vec3> vertices; // The list of vertices of the object.
+vector<triangle> triangles; // The list of faces of the object.
+vector<glm::vec3> normals; 	// The list of normals on the object
 
-int t;
+int t; // A timer
 
-GLuint curves_program;
-GLuint curves_vertex;
-GLuint curves_fragment;
-GLuint curves_tesscontrol;
-GLuint curves_tesseval;
+GLuint curves_program; 		// Integer for the program
+GLuint curves_vertex; 		// Integer for the vertex shader
+GLuint curves_fragment; 	// Integer for the fragment shader
+GLuint curves_tesscontrol; 	// Integer for the tesselation control shader
+GLuint curves_tesseval; 	// Integer for the tesselation evaluator
 
-glm::mat4 matrix_mv;
-glm::mat4 matrix_mvp;
-glm::vec3 light_position;
-glm::vec3 light_color;
+glm::mat4 matrix_mv; 		// Model-view matrix
+glm::mat4 matrix_mvp; 		// Model-view-projection matrix
+glm::vec3 light_position; 	// Position of the light in the space
+glm::vec3 light_color; 		// Color of the light in the space
 
-GLuint shader_mv;
+GLuint shader_mv; 			// Integers for the shaders (???)
 GLuint shader_mvp;
 GLuint shader_lpos;
 GLuint shader_lcolor;
 GLuint shader_normal;
 
-GLuint tess_inner;
-GLuint tess_outer;
-GLuint tangent_length;
-int t_inner;
-int t_outer;
-float tan_length;
-bool rotate;
-float angle;
-glm::vec3 position;
-glm::vec3 direction;
+GLuint tess_inner; 			// Controllers. Inner tesselation level.
+GLuint tess_outer;			// Outer tesselation level.
+GLuint tangent_length;		// Length of the tangent.
+int t_inner;				// Local inner tesselation level
+int t_outer; 				// Local outer tesselation level
+float tan_length;			// Length of the tangent locally.
+bool rotate; 				// Local rotation switch.
+float angle;				// Local angle for the first vertex of the object - to be randomised.
+glm::vec3 position; 		// The position of the object (???)
+glm::vec3 direction; 		// The facing of the object (???)
 
-/**/
+/* Vectors and arrays for loading the shader source code. */
 vector<char> fragment_source;
 vector<char> vertex_source;
 vector<char> tesscontrol_source;
@@ -66,72 +66,18 @@ const char *tesscontrol_source_pointer;
 const char *tesseval_source_pointer;
 /**/
 
-void curve_object(int count) {
-  if(count <= 0) return;
-  glm::vec3 v1, v2, v3, n1, n2, n3, b1, b2, b3, bn1, bn2, bn3;
-  int i1, i2, i3, in1, in2, in3, o1, o2, o3, on1, on2, on3;
-  triangle t1, t2, t3, t4;
-  vector<triangle> new_triangles;
-
-  for (int i = 0; i < triangles.size(); ++i) {
-    // Read vertices out of triangles vector.
-    o1 = triangles.at(i).i1;
-    o2 = triangles.at(i).i2;
-    o3 = triangles.at(i).i3;
-    on1 = triangles.at(i).n1;
-    on2 = triangles.at(i).n2;
-    on3 = triangles.at(i).n3;
-
-    v1 = vertices.at(o1);
-    v2 = vertices.at(o2);
-    v3 = vertices.at(o3);
-    n1 = normals.at(on1);
-    n2 = normals.at(on2);
-    n3 = normals.at(on3);
-
-    bezier(v1, v2, n1, n2, b1, bn1);
-    bezier(v2, v3, n2, n3, b2, bn2);
-    bezier(v3, v1, n3, n1, b3, bn3);
-
-    i1 = vertices.size();
-    i2 = i1 + 1;
-    i3 = i2 + 1;
-    in1 = normals.size();
-    in2 = in1 + 1;
-    in3 = in2 + 1;
-
-    vertices.push_back(b1);
-    vertices.push_back(b2);
-    vertices.push_back(b3);
-    normals.push_back(bn1);
-    normals.push_back(bn2);
-    normals.push_back(bn3);
-
-    t1 = createTriangle(o1, i1, i3, on1, in1, in3);
-    t2 = createTriangle(o2, i2, i1, on2, in2, in1);
-    t3 = createTriangle(o3, i3, i2, on3, in3, in2);
-    t4 = createTriangle(i1, i2, i3, in1, in2, in3);
-
-    new_triangles.push_back(t1);
-    new_triangles.push_back(t2);
-    new_triangles.push_back(t3);
-    new_triangles.push_back(t4);
-  }
-
-  triangles = new_triangles;
-  curve_object(--count);
-}
-
+// Draw the object to the screen.
 void draw_obj(void)
 {
-  glm::vec3 v1, v2, v3, n1, n2, n3;
-  glm::vec3 n;
+  glm::vec3 v1, v2, v3, n1, n2, n3; // Vectors and normals of face
+  glm::vec3 n; 						// Face normal.
 
-  if (rotate) {
-    angle += (clock() - t) / 1e6f;
+  if (rotate) { // Check whether we should rotate object
+    angle += (clock() - t) / 1e6f; // If yes, add tickes since last draw divided by 1000000. (???)
   }
-  t = clock(); 
+  t = clock(); // Keep track of the time, so it doesn't run away from us.
 
+  // (???)
   // rotate modelview (similar to glRotate)
   glm::mat4 rotated = glm::rotate(matrix_mv, angle, glm::vec3(0.0f, 1.0f, 0.0f));
   rotated = glm::rotate(rotated, angle / 10, glm::vec3(1.0f, 0.0f, 0.0f));
@@ -164,7 +110,7 @@ void draw_obj(void)
     n3 = normals.at(triangles.at(i).n3);
 
     // normals are not a fixed part of the GLSL 1.4+ pipeline
-    // we pass them as atrributes, and use them as normals in our shaders
+    // we pass them as attributes, and use them as normals in our shaders
     glVertexAttrib3fv(shader_normal, &n1[0]);
     glVertex3fv(&v1[0]);
     glVertexAttrib3fv(shader_normal, &n2[0]);
